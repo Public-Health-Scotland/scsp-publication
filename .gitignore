@@ -21,6 +21,9 @@ archive/
 # Word files #
 *.[dD][oO][cC]*
 
+# htlm files #
+*.[hH][tT][mM][lL]
+
 # SPSS formats #
 *.[sS][aA][vV]
 
