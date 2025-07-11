@@ -1,0 +1,36 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+# 'data' folder #
+data/
+temp/
+output/
+historical/
+archive/
+
+# Common text files that may contain data #
+*.[cC][sS][vV]
+*.[tT][xX][tT]
+
+# Excel files #
+*.[xX][lL][sS]*
+
+# Word files #
+*.[dD][oO][cC]*
+
+# SPSS formats #
+*.[sS][aA][vV]
+
+# R data files #
+*.[rR][dD][aA][tT][aA]
+*.[rR][dD][sS]
+
+# Plot files #
+*.[pP][nN][gG]*
+
+# R Environment Variables
+.Renviron
+
