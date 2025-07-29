@@ -1,7 +1,7 @@
 # Scottish Cervical Screening Programme - Annual Publication
 Analytical pipeline for the annual Scottish Cervical Screening Programme publication.
 
-The pipeline currently contain the analysis for KPI 1-3, which was first published July 2024.
+The pipeline currently contain the analysis for KPI 1-3, which was first published July 2025.
 The pipeline will be updated to also contain the analysis for KPI 4-6 when this has been developed.
 Please see the most recent 
 [publication](https://publichealthscotland.scot/publications/scottish-cervical-screening-programme-statistics)
