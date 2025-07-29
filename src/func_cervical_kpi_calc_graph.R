@@ -12,7 +12,7 @@
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-#### Function to set eligibility flag depending on reporting (financial) year
+# Function to set eligibility flag depending on reporting (financial) year ----
 ## df: KPI 1.1 data frame for adding eligibility flag to
 ## fy_yr_start: The year of the start of the reporting (financial) year
 
@@ -52,7 +52,7 @@ cervical_eli_flag <- function(df,
 }
 
 
-#### Function to calculate percentages
+# Function to calculate percentages ----
 ## df: dataframe to analyse uptake for
 ## filter_expr: add expression for filtering data, use brackets around the expression
 ## numerator: add the name of the column to be the numerator
@@ -167,7 +167,7 @@ cervical_pct <- function(df, filter_expr, numerator, denominator, ...,
 }
 
 
-#### Function to convert no data to '..' for reporting in Excel
+# Function to convert no data to '..' for reporting in Excel ----
 ## df: dataframe where numbers might be missing due to no count data
 no_data_reporting_ref <- function(df) {
   df %>% 
@@ -177,8 +177,8 @@ no_data_reporting_ref <- function(df) {
 
 
 
-#### Function to create graph for uptake across health boards and Scotland total,
-#### with a data column for each secondary category, i.e. SIMD
+# Function to create column bar graph ----
+# for uptake across health boards and Scotland total, with a data column for each secondary category, i.e. SIMD
 ## df: dataframe with uptake data for each health board and Scotland
 ## data_col: data column in df which contain the data for the graph, i.e. "Uptake"
 ## colours: vector of colour hex codes
@@ -253,8 +253,8 @@ cervical_column_graph <- function(df, data_col, colours,
   plot
 }
 
-#### Function to create line graph with optional threshold line, annotation and
-#### points
+# Function to create line graph ----
+# with optional threshold line, annotation and points
 ## df: dataframe - group data in column 1, x-axis data in column 2 and y-axis
 ## in column 3
 ## data_col: string - data column name df for y-axis
@@ -307,11 +307,11 @@ cervical_line_graph <- function(df, data_col, colours, threshold=FALSE,
   return(plot)
 }
 
-## Create palette ----
 
-# When used in a plotting function it helps assign which colours will be visible within the plot
-# Uses the number of unique values in the colour category to pick groups of colours to assign
-# so it is forced for small numbers
+# Function to create palette ----
+## When used in a plotting function it helps assign which colours will be visible within the plot
+## Uses the number of unique values in the colour category to pick groups of colours to assign
+## so it is forced for small numbers
 
 create_palette <- function(colour) {
   

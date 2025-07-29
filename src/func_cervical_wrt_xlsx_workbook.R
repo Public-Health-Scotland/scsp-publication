@@ -12,7 +12,7 @@
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-#### Function to write to the Cover sheet for excel reports
+# Function to write to the Cover sheet for excel reports ----
 ## wb: workbook with a sheet named Cover
 ## scr_period: The screening period, i.e. financial year: 1st April - 31st March
 ## kpi_title: KPI specfic title variable
@@ -46,7 +46,7 @@ wrt_xlsx_cover <- function(wb, scr_period, kpi_title, styles) {
 
 
 
-#### Function to write to the Notes sheet for excel reports
+# Function to write to the Notes sheet for excel reports ----
 ## wb: workbook with a sheet named Notes
 ## kpi_notes: List notes for the KPI
 ## styles: Vector with Excel formatting styles 
@@ -141,7 +141,7 @@ wrt_xlsx_notes <- function(wb, kpi_notes, styles) {
 
 
 
-#### Function to write the KPI 1 excel report
+# Function to write the KPI 1 excel report ----
 ## wb: workbook with a sheet named Notes
 ## scr_1yr: The 1 year annual screening period
 ## scr_5yr: The 5 year screening look-back period
@@ -237,7 +237,7 @@ wrt_xlsx_kpi1 <- function(scr_1yr, scr_5yr, styles, kpi_notes, kpi1_list,
 
 
 
-#### Function to write the KPI 2 excel report
+# Function to write the KPI 2 excel report ----
 ## wb: workbook with a sheet named Notes
 ## scr_1yr: The 1 year annual screening period
 ## styles: Vector with Excel formatting styles 
@@ -289,7 +289,7 @@ wrt_xlsx_kpi2 <- function(wb, scr_1yr, styles, kpi_notes, kpi_list,
 
 
 
-#### Function to write the KPI 3 excel report
+# Function to write the KPI 3 excel report ----
 ## wb: workbook with a sheet named Notes
 ## scr_1yr: The 1 year annual screening period
 ## styles: Vector with Excel formatting styles 

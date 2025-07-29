@@ -12,16 +12,16 @@
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-## Functions to add QF columns to OpenData dataframes
+# Functions to add QF columns to OpenData dataframes ----
 
-## OpenData HBRQF column
+## OpenData HBRQF column ----
 ## df: dataframe containing a coulmn named HBR with hb2019 codes
 od_hbrqf <- function(df) {
   df |>
     mutate(HBRQF = ifelse(HBR == "S92000003", "d", NA), 
            .after = HBR) }
 
-## OpenData AgeGroupQF column
+## OpenData AgeGroupQF column ----
 ## df: dataframe containing a coulmn named AgeGroup
 od_ageqf <- function(df) {
   df |>
@@ -29,7 +29,7 @@ od_ageqf <- function(df) {
            .after = AgeGroup)
 }
 
-## OpenData SIMDQF column
+## OpenData SIMDQF column ----
 ## df: dataframe containing a coulmn names SIMD
 od_simdqf <- function(df) {
   df |> 

@@ -12,7 +12,7 @@
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-#### Function to write to the KPI data sheet for excel reports - One table ####
+# Function to write to the KPI data sheet for excel reports - One table ----
 ## wb: workbook with a sheet named Notes
 ## sheet: string with the name of the Sheet to write the data to
 ## scr_period: String with the Screening period
@@ -132,7 +132,7 @@ wrt_kpi_1x_table <- function(wb, sheet, scr_period, kpi_subt, fig_legend,
 
 
 
-#### Function to write to the KPI data sheets for excel reports - 2 tables ####
+# Function to write to the KPI data sheets for excel reports - 2 tables ----
 ## wb: workbook with a sheet named Notes
 ## sheet: string with the name of the Sheet to write the data to
 ## scr_period: String with the Screening period
@@ -333,7 +333,7 @@ wrt_kpi_2x_tables <- function(wb, sheet, scr_period, kpi_subt, fig_legend,
 }
 
 
-#### Function to write to the KPI 1 Deprivation analysis sheets for excel reports ####
+# Function to write to the KPI data sheets for excel reports - 1 table, 2 graphs ----
 ## wb: workbook with a sheet named Notes
 ## sheet: string with the name of the Sheet to write the data to
 ## scr_period: String with the Screening period
