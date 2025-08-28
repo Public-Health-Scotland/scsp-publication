@@ -22,6 +22,8 @@ library(janitor)
 library(phsmethods)
 library(ggplot2)
 library(openxlsx)
+#devtools::install_github("Public-Health-Scotland/phscervscreen")
+library(phscervscreen)
 
 ## Clean global environment
 rm(list=ls())
@@ -69,23 +71,29 @@ hist_repeat_test <- readRDS(paste0(hist_folder_path, "/kpi3_3_hist_repeat_test_"
 
 # KPI 3 - Screening Process KPIs ----
 ## KPI 3.1 - Percentage of unsatisfactory cytology tests
-kpi3_1 <- cervical_pct(kpi3_extract, (reported_cyt_fy == 1), 
-                       reported_cyt_unsat, reported_cyt_fy, hb2019) %>% 
+kpi3_1 <- cerv_get_pct(kpi3_extract, (reported_cyt_fy == 1), 
+                       reported_cyt_unsat, reported_cyt_fy, hb2019,
+                       fct_levels = hb_levels,
+                       fy_yr_start = yr_start) %>% 
   rename("cytology_samples" = Denominator,
          "unsatisfactory" = Numerator,
          "unsatisfactory_pct" = Percentage)
 
 ## KPI 3.2 - Percentage of tests processed which were reported as HPV fail
-kpi3_2 <- cervical_pct(kpi3_extract, (reported_hpv_fy == 1),
-                       reported_hpv_fail, reported_hpv_fy, hb2019) %>% 
+kpi3_2 <- cerv_get_pct(kpi3_extract, (reported_hpv_fy == 1),
+                       reported_hpv_fail, reported_hpv_fy, hb2019,
+                       fct_levels = hb_levels,
+                       fy_yr_start = yr_start) %>% 
   rename("virology_samples" = Denominator,
          "hpv_fail" = Numerator,
          "hpv_fail_pct" = Percentage)
 
 ## KPI 3.3 - Percentage of repeated tests due to cytology unsatisfactory or HPV fail
-kpi3_3 <- cervical_pct(kpi3_3_extract, (first_reported_fy == 1),
+kpi3_3 <- cerv_get_pct(kpi3_3_extract, (first_reported_fy == 1),
                        repeat_scr, first_reported_fy,
-                       hb2019) %>%
+                       hb2019,
+                       fct_levels = hb_levels,
+                       fy_yr_start = yr_start) %>%
   rename("result_fail" = Denominator,
          "repeat_screen" = Numerator,
          "repeat_screen_pct" = Percentage)
