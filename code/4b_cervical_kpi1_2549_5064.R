@@ -21,6 +21,8 @@ library(forcats)
 library(phsmethods)
 library(ggplot2)
 library(openxlsx)
+#devtools::install_github("Public-Health-Scotland/phscervscreen")
+library(phscervscreen)
 
 ## Clean global environment
 rm(list=ls())
