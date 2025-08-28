@@ -21,6 +21,8 @@ library(forcats)
 library(phsmethods)
 library(ggplot2)
 library(openxlsx)
+#devtools::install_github("Public-Health-Scotland/phscervscreen")
+library(phscervscreen)
 
 ## Clean global environment
 rm(list=ls())
@@ -72,78 +74,102 @@ hist_simd_upt <- readRDS(paste0(hist_folder_path, "/kpi1_2_hist_uptake_simd_",
 # KPI 1 - Coverage and Uptake KPIs ----
 ## KPI 1.1: Coverage of eligible individuals who have attended screening ----
 ## within a 3.5 and/or 5.5-year reporting period broken down by age and SIMD
-kpi1_1_25_64 <- cervical_pct(kpi1_1_extract, (eligible == 1),
-                       scr5_5, eligible,
-                       hb2019, age_group_25_64,
-                       calc_coverage = TRUE) %>% 
+kpi1_1_25_64 <- cerv_get_pct(kpi1_1_extract, (eligible == 1),
+                             scr5_5, eligible,
+                             hb2019, age_group_25_64,
+                             fct_levels = hb_levels,
+                             fy_yr_start = yr_start,
+                             calc_coverage = TRUE) %>% 
   rename("age_group" = age_group_25_64) %>% 
   filter(age_group != "Under 25")
 
-kpi1_1_2549_5064 <- cervical_pct(kpi1_1_extract, (eligible == 1),
+kpi1_1_2549_5064 <- cerv_get_pct(kpi1_1_extract, (eligible == 1),
                                  scr5_5, eligible,
                                  hb2019, age_group2549_5064,
+                                 fct_levels = hb_levels,
+                                 fy_yr_start = yr_start,
                                  calc_coverage = TRUE) %>% 
   rename("age_group" = age_group2549_5064)
 
-kpi1_1_5yr_grp <- cervical_pct(kpi1_1_extract, (eligible == 1),
+kpi1_1_5yr_grp <- cerv_get_pct(kpi1_1_extract, (eligible == 1),
                                scr5_5, eligible,
                                hb2019, age_group,
+                               fct_levels = hb_levels,
+                               fy_yr_start = yr_start,
                                calc_coverage = TRUE) %>% 
   filter(age_group != "Under 25")
 
-kpi1_1_simd_25_64 <- cervical_pct(kpi1_1_extract, (eligible == 1),
-                       scr5_5, eligible,
-                       hb2019, age_group_25_64, `Deprivation Category`,
-                       calc_coverage = TRUE) %>% 
+kpi1_1_simd_25_64 <- cerv_get_pct(kpi1_1_extract, (eligible == 1),
+                                  scr5_5, eligible,
+                                  hb2019, age_group_25_64, `Deprivation Category`,
+                                  fct_levels = hb_levels,
+                                  fy_yr_start = yr_start,
+                                  calc_coverage = TRUE) %>% 
   rename("age_group" = age_group_25_64)
 
-kpi1_1_simd_2549_5064 <- cervical_pct(kpi1_1_extract, (eligible == 1),
-                        scr5_5, eligible,
-                        hb2019, age_group2549_5064, `Deprivation Category`,
-                        calc_coverage = TRUE) %>% 
+kpi1_1_simd_2549_5064 <- cerv_get_pct(kpi1_1_extract, (eligible == 1),
+                                      scr5_5, eligible,
+                                      hb2019, age_group2549_5064, `Deprivation Category`,
+                                      fct_levels = hb_levels,
+                                      fy_yr_start = yr_start,
+                                      calc_coverage = TRUE) %>% 
   rename("age_group" = age_group2549_5064) %>% 
   filter(age_group != "Under 25")
 
-kpi1_1_simd_5yr_grp <- cervical_pct(kpi1_1_extract, (eligible == 1),
-                               scr5_5, eligible,
-                               hb2019, age_group, `Deprivation Category`,
-                               calc_coverage = TRUE) %>% 
+kpi1_1_simd_5yr_grp <- cerv_get_pct(kpi1_1_extract, (eligible == 1),
+                                    scr5_5, eligible,
+                                    hb2019, age_group, `Deprivation Category`,
+                                    fct_levels = hb_levels,
+                                    fy_yr_start = yr_start,
+                                    calc_coverage = TRUE) %>% 
   filter(age_group != "Under 25")
 
 
 ## KPI 1.2: Annual uptake among individuals who are sent an offer of screening ----
 ## in the latest financial year broken down by age and SIMD
-kpi1_2_25_64 <- cervical_pct(kpi1_2_extract, (invite_fy_flag == 1),
+kpi1_2_25_64 <- cerv_get_pct(kpi1_2_extract, (invite_fy_flag == 1),
                              uptake_flag, invite_fy_flag,
-                             hb2019, age_group_25_64) %>% 
+                             hb2019, age_group_25_64,
+                             fct_levels = hb_levels,
+                             fy_yr_start = yr_start) %>% 
   rename("age_group" = age_group_25_64) %>% 
   filter(age_group != "65+")
 
-kpi1_2_2549_5064 <- cervical_pct(kpi1_2_extract, (invite_fy_flag == 1),
+kpi1_2_2549_5064 <- cerv_get_pct(kpi1_2_extract, (invite_fy_flag == 1),
                                  uptake_flag, invite_fy_flag,
-                                 hb2019, age_group2549_5064) %>% 
+                                 hb2019, age_group2549_5064,
+                                 fct_levels = hb_levels,
+                                 fy_yr_start = yr_start) %>% 
   rename("age_group" = age_group2549_5064) %>% 
   filter(age_group != "65+")
 
-kpi1_2_5yr_grp <- cervical_pct(kpi1_2_extract, (invite_fy_flag == 1),
+kpi1_2_5yr_grp <- cerv_get_pct(kpi1_2_extract, (invite_fy_flag == 1),
                                uptake_flag, invite_fy_flag,
-                               hb2019, age_group)
+                               hb2019, age_group,
+                               fct_levels = hb_levels,
+                               fy_yr_start = yr_start)
 
-kpi1_2_simd_25_64 <- cervical_pct(kpi1_2_extract, (invite_fy_flag == 1),
+kpi1_2_simd_25_64 <- cerv_get_pct(kpi1_2_extract, (invite_fy_flag == 1),
                                   uptake_flag, invite_fy_flag,
-                                  hb2019, age_group_25_64, `Deprivation Category`) %>% 
+                                  hb2019, age_group_25_64, `Deprivation Category`,
+                                  fct_levels = hb_levels,
+                                  fy_yr_start = yr_start) %>% 
   rename("age_group" = age_group_25_64) %>% 
   filter(age_group != "65+")
 
-kpi1_2_simd_2549_5064 <- cervical_pct(kpi1_2_extract, (invite_fy_flag == 1),
+kpi1_2_simd_2549_5064 <- cerv_get_pct(kpi1_2_extract, (invite_fy_flag == 1),
                                       uptake_flag, invite_fy_flag,
-                                      hb2019, age_group2549_5064, `Deprivation Category`) %>% 
+                                      hb2019, age_group2549_5064, `Deprivation Category`,
+                                      fct_levels = hb_levels,
+                                      fy_yr_start = yr_start) %>% 
   rename("age_group" = age_group2549_5064) %>% 
   filter(age_group != "65+")
 
-kpi1_2_simd_5yr_grp <- cervical_pct(kpi1_2_extract, (invite_fy_flag == 1),
-                               uptake_flag, invite_fy_flag,
-                               hb2019, age_group, `Deprivation Category`)
+kpi1_2_simd_5yr_grp <- cerv_get_pct(kpi1_2_extract, (invite_fy_flag == 1),
+                                    uptake_flag, invite_fy_flag,
+                                    hb2019, age_group, `Deprivation Category`,
+                                    fct_levels = hb_levels,
+                                    fy_yr_start = yr_start)
 
 
 # Save the new KPI 1 to historic records ----

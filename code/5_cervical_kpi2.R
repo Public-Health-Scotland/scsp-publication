@@ -22,6 +22,8 @@ library(janitor)
 library(phsmethods)
 library(ggplot2)
 library(openxlsx)
+#devtools::install_github("Public-Health-Scotland/phscervscreen")
+library(phscervscreen)
 
 ## Clean global environment
 rm(list=ls())
@@ -59,17 +61,21 @@ hist_rejected <- readRDS(paste0(hist_folder_path, "/kpi2_2_hist_rejected_",
 # KPI 2 - Laboratory Service KPIs ----
 ## KPI 2.1 - Annual percentage of samples reported within 10 working days ----
 ## from the date of the sample being taken
-kpi2_1 <- cervical_pct(kpi_extract, (reported_fy == 1),
+kpi2_1 <- cerv_get_pct(kpi_extract, (reported_fy == 1),
                        reported_14, reported_fy,
-                       hb2019) %>% 
+                       hb2019,
+                       fct_levels = hb_levels,
+                       fy_yr_start = yr_start) %>% 
   rename("total_reports" = Denominator,
          "report_2week" = Numerator,
          "report_2week_pct" = Percentage)
 
 ## KPI 2.2 - Percentage of tests rejected by the laboratory prior to processing ----
-kpi2_2 <- cervical_pct(kpi_extract, (arrived_fy == 1),
+kpi2_2 <- cerv_get_pct(kpi_extract, (arrived_fy == 1),
                        rejected, arrived_fy,
-                       hb2019) %>% 
+                       hb2019,
+                       fct_levels = hb_levels,
+                       fy_yr_start = yr_start) %>% 
   rename("total_samples" = Denominator,
          "rejected_samples" = Numerator,
          "rejected_samples_pct" = Percentage)
