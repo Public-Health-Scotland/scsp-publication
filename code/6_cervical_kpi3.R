@@ -1,238 +1,172 @@
-##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## R Cervical Screening - KPIs for Publication
+################################################################################
+## R Cervical Screening Publication - KPI 1-3
 ## 6_cervical_kpi3.R
 ## 
 ## Adult Screening Team
-## Created: 30/08/24
-## Last update: 09/07/2025
+## Created: 23/08/2024
+## Last update: 25/11/2026
+## Analysts: Ben Duncan & John Quinn
 ## 
 ## Written/run on RStudio Posit Workbench
 ## Platform: x86_64-pc-linux-gnu
 ## R version 4.4.2 (Pile of Leaves) - 2024-10-31
-##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+################################################################################
 
-# Packages ----
-library(readr)
-library(dplyr)
-library(tidyr)
-library(tidylog)
-library(lubridate)
-library(forcats)
-library(janitor)
-library(phsmethods)
-library(ggplot2)
-library(openxlsx)
-#devtools::install_github("Public-Health-Scotland/phscervscreen")
-library(phscervscreen)
+# Load in packages
+if(is.na(utils::packageDate("pacman"))) install.packages("pacman")
+pacman::p_load(phsmethods, readr, dplyr, tidyr, tidylog, janitor, 
+               lubridate, forcats, ggplot2, openxlsx)
 
-## Clean global environment
+# Clean global environment
 rm(list=ls())
 
-## Sourcing
+# Source in other scripts containing functions and global variables
 source("code/1_housekeeping.R")
 source("src/func_cervical_kpi_calc_graph.R")
 source("src/func_cervical_wrt_kpi_data.R")
 source("src/func_cervical_wrt_xlsx_workbook.R")
 
-## Clean global environment
-rm(list=ls(pattern = "kpi[1-2]|fig[1-2]|simd"))
+# Clean global environment
+rm(list=ls(pattern = "kpi[1-2]|kpi[4-6]|fig[1-2]|fig[4-6]|atos|simd"))
 
-# Import extract ----
-# If KPI analysis has previously been prepared for the financial year of interest
-# Jump to section: Prepare data for publication
-kpi3_extract <- read_rds(paste0(fy_folder_path,
-                                "temp/kpi3_extract_", year_label, ".rds")) %>%
+# 2: Import Extract Dara ----
+kpi3_extract <- arrow::read_parquet(paste0(fy_folder_path,
+                                             "temp/kpi3_extract", "_update", ".parquet")) %>%
   # remove any data without health board information
   filter(!is.na(`NHS Board of Residence`))
 
-kpi3_3_extract <- read_rds(paste0(fy_folder_path,
-                                  "temp/kpi3_3_extract_", year_label, ".rds")) %>%
+kpi3_3_extract <- arrow::read_parquet(paste0(fy_folder_path,
+                                             "temp/kpi3_3_extract", "_update", ".parquet")) %>%
   # remove any data without health board information
   filter(!is.na(`NHS Board of Residence`))
 
 
-# Import historic rds files ----
-## KPI 3.1
-hist_cyt_unsat <- readRDS(paste0(hist_folder_path, "/kpi3_1_hist_cytology_unsatis_", 
-                                 substr(yr_start-1, 3, 4), substr(yr_end-1, 3, 4),
-                                 ".rds"))
+# 3: KPI 3 - Screening Process KPIs ----
 
-## KPI 3.2
-hist_hpv_fail <- readRDS(paste0(hist_folder_path, "/kpi3_2_hist_hpv_failed_", 
-                                substr(yr_start-1, 3, 4), substr(yr_end-1, 3, 4),
-                                ".rds")) |> 
-  filter(!fin_year %in% c("2016/17", "2017/18", "2018/19", "2019/20"))
-
-## KPI 3.3
-hist_repeat_test <- readRDS(paste0(hist_folder_path, "/kpi3_3_hist_repeat_test_", 
-                                   substr(yr_start-1, 3, 4), substr(yr_end-1, 3, 4),
-                                   ".rds"))
+## 3.1: KPI 3.1 - Percentage of unsatisfactory cytology tests ----
+kpi3_1 <- kpi3_extract |> 
+  calculate_kpi(num = reported_cyt_unsat, den = reported_cyt_fy) %>% 
+  rename("cytology_samples" = denominator,
+         "unsatisfactory" = numerator,
+         "unsatisfactory_pct" = percentage) |> 
+  mutate(hbres_screen = factor(stringr::str_replace(match_area(as.character(hb2019)), " and ", " & "),
+                          levels = hbres_levels),
+    .before = 1)
 
 
-# KPI 3 - Screening Process KPIs ----
-## KPI 3.1 - Percentage of unsatisfactory cytology tests
-kpi3_1 <- cerv_get_pct(kpi3_extract, (reported_cyt_fy == 1), 
-                       reported_cyt_unsat, reported_cyt_fy, hb2019,
-                       fct_levels = hb_levels,
-                       fy_yr_start = yr_start) %>% 
-  rename("cytology_samples" = Denominator,
-         "unsatisfactory" = Numerator,
-         "unsatisfactory_pct" = Percentage)
 
-## KPI 3.2 - Percentage of tests processed which were reported as HPV fail
-kpi3_2 <- cerv_get_pct(kpi3_extract, (reported_hpv_fy == 1),
-                       reported_hpv_fail, reported_hpv_fy, hb2019,
-                       fct_levels = hb_levels,
-                       fy_yr_start = yr_start) %>% 
-  rename("virology_samples" = Denominator,
-         "hpv_fail" = Numerator,
-         "hpv_fail_pct" = Percentage)
+## 3.2: KPI 3.2 - Percentage of tests processed which were reported as HPV fail ----
+kpi3_2 <- kpi3_extract |> 
+  calculate_kpi(num = reported_hpv_fail, den = reported_hpv_fy) %>% 
+  rename("virology_samples" = denominator,
+         "hpv_fail" = numerator,
+         "hpv_fail_pct" = percentage)%>%
+  mutate(hbres_screen = factor(stringr::str_replace(match_area(as.character(hb2019)), " and ", " & "),
+                          levels = hbres_levels),
+    .before = 1) |> 
+  filter(!financial_year %in% c("2016/17", "2017/18", "2018/19", "2019/20"))
 
-## KPI 3.3 - Percentage of repeated tests due to cytology unsatisfactory or HPV fail
-kpi3_3 <- cerv_get_pct(kpi3_3_extract, (first_reported_fy == 1),
-                       repeat_scr, first_reported_fy,
-                       hb2019,
-                       fct_levels = hb_levels,
-                       fy_yr_start = yr_start) %>%
-  rename("result_fail" = Denominator,
-         "repeat_screen" = Numerator,
-         "repeat_screen_pct" = Percentage)
 
-## Save the new KPI 3 to historic records ----
-hist_cyt_unsat_add <- rbind(hist_cyt_unsat, 
-                            kpi3_1 %>%
-                              mutate(fin_year = fin_yr, 
-                                     hbres_screen = factor(stringr::str_replace(match_area(as.character(hb2019)), " and ", " & "),
-                                                           levels = hbres_levels),
-                                     .before = 1))
+## 3.3: KPI 3.3 - Percentage of repeated tests due to cytology unsatisfactory or HPV fail ----
 
-saveRDS(hist_cyt_unsat_add,
-        file = paste0(fy_folder_path,
-                      "historic/kpi3_1_hist_cytology_unsatis_", year_label, ".rds"))
-
-hist_hpv_fail_add <- rbind(hist_hpv_fail, 
-                           kpi3_2 %>%
-                             mutate(fin_year = fin_yr, 
-                                    hbres_screen = factor(stringr::str_replace(match_area(as.character(hb2019)), " and ", " & "),
-                                                          levels = hbres_levels),
-                                    .before = 1))
-
-saveRDS(hist_hpv_fail_add, 
-        file = paste0(fy_folder_path,
-                      "historic/kpi3_2_hist_hpv_failed_", year_label, ".rds"))
-
-hist_repeat_test_add <- rbind(hist_repeat_test, 
-                              kpi3_3 %>%
-                                mutate(fin_year = fin_yr, 
-                                       hbres_screen = factor(stringr::str_replace(match_area(as.character(hb2019)), " and ", " & "),
+## Numerator: Number of individuals who are screening following cytology unsatisfactory or HPV fail
+## Denominator: Total number of individuals with an unsatisfactory result annually
+kpi3_3 <- kpi3_3_extract |> 
+  calculate_kpi(num = repeat_scr, den = first_reported_fy) %>% 
+  rename("result_fail" = denominator,
+         "repeat_screen" = numerator,
+         "repeat_screen_pct" = percentage) |> 
+  mutate(hbres_screen = factor(stringr::str_replace(match_area(as.character(hb2019)), " and ", " & "),
                                                              levels = hbres_levels),
-                                       .before = 1))
-
-saveRDS(hist_repeat_test_add, 
-        file = paste0(fy_folder_path,
-                      "historic/kpi3_3_hist_repeat_test_", year_label, ".rds"))
+         .before = 1)
 
 
-# Prepare data for publication ----
-# If above KPI data has previously been prepared, import rds files:
-# hist_cyt_unsat_add <- read_rds(paste0(fy_folder_path,
-#                                       "historic/kpi3_1_hist_cytology_unsatis_", year_label, ".rds"))
-# hist_hpv_fail_add <- read_rds(paste0(fy_folder_path,
-#                                      "historic/kpi3_2_hist_hpv_failed_", year_label, ".rds"))
-# hist_repeat_test_add <- read_rds(paste0(fy_folder_path,
-#                                         "historic/kpi3_3_hist_repeat_test_", year_label, ".rds"))
-
-## KPI 3.1 - Percentage of unsatisfactory cytology tests ----
-hist_cyt_unsat_table <- hist_cyt_unsat_add %>% 
+# 4: Create Tables and Graphs ----
+## 4.1: KPI 3.1 - Percentage of unsatisfactory cytology tests ----
+cyt_unsat_table <- kpi3_1 %>% 
   select(!c(hb2019, cytology_samples, unsatisfactory))
 
 # Table for printing
-kpi3_1_table <- hist_cyt_unsat_table %>% 
-  #filter(fin_year %in% fin_year_5) %>% # add back in after 2022/23 and 2023/24 combined publication 
-  pivot_wider(names_from = fin_year,
+kpi3_1_table <- cyt_unsat_table %>% 
+  filter(financial_year %in% fin_year_5) %>% # add back in after 2022/23 and 2023/24 combined publication 
+  pivot_wider(names_from = financial_year,
               values_from = unsatisfactory_pct) %>% 
   rename("Health Board of Residence" = hbres_screen,
-         "2020/21\u00b9" = "2020/21")
+         any_of(c("2020/21\u00b9" = "2020/21")))
 
 # Graph for printing
-kpi3_1_graph <- cervical_column_graph(df = hist_cyt_unsat_table %>%
-                                        filter(fin_year %in% fin_year_5) %>%
-                                        select("Health Board of Residence" = hbres_screen,
-                                               "Financial Year" = fin_year, 
-                                               "Cytology Unsatisfactory (%)" = unsatisfactory_pct),
-                                      data_col = "Cytology Unsatisfactory (%)",
-                                      colours = create_palette(hist_cyt_unsat_table |> 
-                                                                 filter(fin_year %in% fin_year_5) |> 
-                                                                 pull(fin_year)), 
+kpi3_1_graph <- cyt_unsat_table %>%
+  filter(financial_year %in% fin_year_5) %>%
+  select("Health Board of Residence" = hbres_screen,
+         "Financial Year" = financial_year, 
+         "Cytology Unsatisfactory (%)" = unsatisfactory_pct) |> 
+  cervical_column_graph(data_col = "Cytology Unsatisfactory (%)",
+                        colours = create_palette(pull(cyt_unsat_table ,financial_year)), 
                                       threshold = 4, 
                                       pct = FALSE)
 
-ggsave(filename = paste0(fy_folder_path, "graphs/kpi3_1_", year_label, ".png"),
-       plot = kpi3_1_graph,
-       width = 9, height = 5)
+# ggsave(filename = paste0(fy_folder_path, "graphs/kpi3_1_", year_label, ".png"),
+#        plot = kpi3_1_graph,
+#        width = 9, height = 5)
 
-## KPI 3.2 - Percentage of tests processed which were reported as HPV fail ----
-hist_hpv_fail_table <- hist_hpv_fail_add %>% 
+## 4.2: KPI 3.2 - Percentage of tests processed which were reported as HPV fail ----
+hpv_fail_table <- kpi3_2 %>% 
   select(!c(hb2019, virology_samples, hpv_fail))
 
 # Table for printing
-kpi3_2_table <- hist_hpv_fail_table %>% 
-  #filter(fin_year %in% fin_year_5) %>% # add back in after 2022/23 and 2023/24 combined publication 
-  pivot_wider(names_from = fin_year,
+kpi3_2_table <- hpv_fail_table %>% 
+  filter(financial_year %in% fin_year_5) %>% # add back in after 2022/23 and 2023/24 combined publication 
+  pivot_wider(names_from = financial_year,
               values_from = hpv_fail_pct) %>% 
   rename("Health Board of Residence" = hbres_screen,
-         "2020/21\u00b9" = "2020/21")
+         any_of(c("2020/21\u00b9" = "2020/21")))
 
 # Graph for printing
-kpi3_2_graph <- cervical_column_graph(df = hist_hpv_fail_table %>%
-                                        filter(fin_year %in% fin_year_5) %>%
-                                        select("Health Board of Residence" = hbres_screen,
-                                               "Financial Year" = fin_year, 
-                                               "HPV Fail (%)" = hpv_fail_pct),
-                                      data_col = "HPV Fail (%)", 
-                                      colours = create_palette(hist_hpv_fail_table |> 
-                                                                 filter(fin_year %in% fin_year_5) |> 
-                                                                 pull(fin_year)), 
+kpi3_2_graph <- hpv_fail_table %>%
+  filter(financial_year %in% fin_year_5) %>%
+   select("Health Board of Residence" = hbres_screen,
+          "Financial Year" = financial_year, 
+          "HPV Fail (%)" = hpv_fail_pct) |> 
+  cervical_column_graph(data_col = "HPV Fail (%)",
+                        colours = create_palette(pull(hpv_fail_table, financial_year)), 
                                       threshold = 1, 
                                       pct = FALSE)
 
-ggsave(filename = paste0(fy_folder_path, "graphs/kpi3_2_", year_label, ".png"),
-       plot = kpi3_2_graph,
-       width = 9, height = 5)
+# ggsave(filename = paste0(fy_folder_path, "graphs/kpi3_2_", year_label, ".png"),
+#        plot = kpi3_2_graph,
+#        width = 9, height = 5)
 
-## KPI 3.3 - Percentage of repeated tests due to cytology unsatisfactory or HPV fail ----
-hist_repeat_test_table <- hist_repeat_test_add %>% 
+## 4.3: KPI 3.3 - Percentage of repeated tests due to cytology unsatisfactory or HPV fail ----
+repeat_test_table <- kpi3_3 %>% 
   select(!c(hb2019, result_fail, repeat_screen))
 
 # Table for printing
-kpi3_3_table <- hist_repeat_test_table %>% 
-  #filter(fin_year %in% fin_year_5) %>% # add back in after 2022/23 and 2023/24 combined publication 
-  pivot_wider(names_from = fin_year,
+kpi3_3_table <- repeat_test_table %>% 
+  filter(financial_year %in% fin_year_5) %>% # add back in after 2022/23 and 2023/24 combined publication 
+  pivot_wider(names_from = financial_year,
               values_from = repeat_screen_pct) %>% 
   rename("Health Board of Residence" = hbres_screen,
-         "2020/21\u00b9" = "2020/21")
+         any_of(c("2020/21\u00b9" = "2020/21")))
 
 # Graph for printing
-kpi3_3_graph <- cervical_column_graph(df = hist_repeat_test_table %>%
-                                        filter(fin_year %in% fin_year_5) %>%
-                                        select("Health Board of Residence" = hbres_screen,
-                                               "Financial Year" = fin_year, 
-                                               "Repeat Screen (%)" = repeat_screen_pct),
-                                      data_col = "Repeat Screen (%)",
-                                      colours = create_palette(hist_repeat_test_table |> 
-                                                                 filter(fin_year %in% fin_year_5) |> 
-                                                                 pull(fin_year)), 
+kpi3_3_graph <- repeat_test_table %>%
+  filter(financial_year %in% fin_year_5) %>%
+  select("Health Board of Residence" = hbres_screen,
+         "Financial Year" = financial_year, 
+         "Repeat Screen (%)" = repeat_screen_pct) |> 
+  cervical_column_graph(data_col = "Repeat Screen (%)",
+                        colours = create_palette(pull(repeat_test_table, financial_year)), 
                                       threshold = 100)
 
-ggsave(filename = paste0(fy_folder_path, "graphs/kpi3_3_", year_label, ".png"),
-       plot = kpi3_3_graph,
-       width = 9, height = 5)
+# ggsave(filename = paste0(fy_folder_path, "graphs/kpi3_3_", year_label, ".png"),
+#        plot = kpi3_3_graph,
+#        width = 9, height = 5)
 
-## Supplementary data for number of total samples processed ----
-kpi3_total_samples <- hist_cyt_unsat_add |> 
-  left_join(hist_hpv_fail_add, by = c("fin_year", "hbres_screen", "hb2019")) |> 
+## 4.4: Supplementary data for number of total samples processed ----
+kpi3_total_samples <- kpi3_1 |> 
+  left_join(kpi3_2, by = c("financial_year", "hbres_screen", "hb2019")) |> 
   filter(hbres_screen == "Scotland") |> 
-  select("Financial Year" = fin_year, 
+  select("Financial Year" = financial_year, 
          "Cytology Samples" = cytology_samples,
          "Virology Samples" = virology_samples) |> 
   pivot_longer(cols = c(2:3),
@@ -240,16 +174,14 @@ kpi3_total_samples <- hist_cyt_unsat_add |>
                values_to = "number") |> 
   pivot_wider(names_from = 1,
               values_from = number) |> 
-  rename("2020/21\u00b9" = "2020/21")
+  rename(any_of(c("2020/21\u00b9" = "2020/21")))
 
-## Write KPI 3 workbook ----
+# 5: Write KPI 3 workbook ----
 wrt_xlsx_kpi3(wb, scr_period_1yr, fmt_styles, kpi_notes$kpi3_notes, kpi3_list, 
               kpi3_total_samples, 
               kpi3_1_table, kpi3_1_graph,
               kpi3_2_table, kpi3_2_graph,
               kpi3_3_table, kpi3_3_graph,
               save_to_kpi3_xlsx)
-
-
 
 # End of Script ----
