@@ -1,34 +1,27 @@
-##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## R Cervical Screening - KPIs for Publication
+################################################################################
+## R Cervical Screening Publication - KPI 1-3
 ## 4_cervical_kpi1_2549_5064.R
 ## 
 ## Adult Screening Team
-## Created: 26/07/24
-## Last update: 09/07/2025
+## Created: 23/08/2024
+## Last update: 25/11/2026
+## Analysts: Ben Duncan & John Quinn
 ## 
 ## Written/run on RStudio Posit Workbench
 ## Platform: x86_64-pc-linux-gnu
 ## R version 4.4.2 (Pile of Leaves) - 2024-10-31
-##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+################################################################################
 
 # Packages ----
-library(readr)
-library(dplyr)
-library(tidyr)
-library(tidylog)
-library(lubridate)
-library(forcats)
-library(phsmethods)
-library(ggplot2)
-library(openxlsx)
-#devtools::install_github("Public-Health-Scotland/phscervscreen")
-library(phscervscreen)
+if(is.na(utils::packageDate("pacman"))) install.packages("pacman")
+pacman::p_load(phsmethods, readr, dplyr, tidyr, tidylog, 
+               lubridate, forcats, ggplot2, openxlsx)
 
-## Clean global environment
+
+# Clean global environment
 rm(list=ls())
 
-
-## Sourcing
+# Sourcing
 source("code/1_housekeeping.R")
 source("src/func_cervical_kpi_calc_graph.R")
 source("src/func_cervical_wrt_kpi_data.R")
@@ -36,10 +29,10 @@ source("src/func_cervical_wrt_xlsx_workbook.R")
 source("src/func_cervical_wrt_xlsx_workbook_2549_5064.R")
 
 
-## Clean global environment
-rm(list=ls(pattern = "kpi[2-3]"))
+# Clean global environment
+rm(list=ls(pattern = "kpi[2-6]|atos"))
 
-# Variables ----
+# Variables
 scr_period_5yr <- paste0("The ", fin_yr, " 5.5-year look-back period: 1st October ", 
                                 year(dmy(fy_start_date_5_5)), "- 31st March ", yr_end)
 scr_period_3yr <- paste0("The ", fin_yr, " 3.5-year look-back period: 1st October ", 
@@ -81,9 +74,9 @@ kpi_notes <- list(
                        "to attend cervical screening every three years ",
                        "and those aged 50-64 every five. From March 2020, ",
                        "women aged 25-64 are invited every five years. ",
-                       "This will be implemented to the KPI analysis in ",
-                       all_scr5_5_start, "/", all_scr5_5_start+1,
-                       ", to allow screening participant to move to the new recall."),
+                       "This will be implemented to the KPI analysis in ", # Draft - needs adjusting
+                       all_scr5_5_start, "/", all_scr5_5_start+1, # Draft - needs adjusting
+                       ", to allow screening participant to move to the new recall."), # Draft - needs adjusting
                 "",
                 "            Table 1: Age-appropriate look-back period at a given point in time",
                 "", #kpi_notes$kpi1_cov_periods_table,
@@ -179,7 +172,7 @@ kpi1_list <- list(kpi1_title = "KPI 1 - Coverage, 3.5 year and 5.5 year split",
                                                  "financial years,", first_report_fin_yr, "to", fin_yr))
 
 save_to_kpi1_sd_xlsx <- paste0(fy_folder_path,
-                               "output/KPI_1_Supplementary_Data_", year_label, ".xlsx")
+                               "output/test/KPI_1_Supplementary_Data_", year_label, "test.xlsx")
 
 
 
@@ -202,25 +195,25 @@ hist_cov_table_2549 <- hist_cov_add %>%
 ### Table for printing
 kpi1_1_5yr_2549 <- hist_cov_table_2549 %>% 
   #filter(fin_year %in% fin_year_5) %>% 
-  pivot_wider(names_from = fin_year,
+  pivot_wider(names_from = financial_year,
               values_from = age_appr_coverage) %>% 
   rename("Health Board of Residence" = hbres_screen)
 
 ### Graph for printing
 kpi1_1_graph_2549 <- cervical_column_graph(df = hist_cov_table_2549 %>%
-                                        filter(fin_year %in% fin_year_5) %>%
+                                        filter(financial_year %in% fin_year_5) %>%
                                         select("Health Board of Residence" = hbres_screen,
-                                               "Financial Year" = fin_year, 
+                                               "Financial Year" = financial_year, 
                                                "Coverage (%)\nWomen aged 25-49" = age_appr_coverage),
                                       data_col = "Coverage (%)\nWomen aged 25-49", 
                                       colours = create_palette(hist_cov_table_2549 %>%
-                                                                 filter(fin_year %in% fin_year_5) |> 
-                                                                 pull(fin_year)), 
+                                                                 filter(financial_year %in% fin_year_5) |> 
+                                                                 pull(financial_year)), 
                                       threshold = 80)
 
-ggsave(filename = paste0(fy_folder_path, "graphs/supp_kpi1_1_2549_", year_label, ".png"),
-       plot = kpi1_1_graph_2549,
-       width = 9, height = 5)
+# ggsave(filename = paste0(fy_folder_path, "graphs/supp_kpi1_1_2549_", year_label, ".png"),
+#        plot = kpi1_1_graph_2549,
+#        width = 9, height = 5)
 
 ## 50-64 ----
 hist_cov_table_5064 <- hist_cov_add %>% 
@@ -230,25 +223,25 @@ hist_cov_table_5064 <- hist_cov_add %>%
 ### Table for printing
 kpi1_1_5yr_5064 <- hist_cov_table_5064 %>% 
   #filter(fin_year %in% fin_year_5) %>% 
-  pivot_wider(names_from = fin_year,
+  pivot_wider(names_from = financial_year,
               values_from = age_appr_coverage) %>% 
   rename("Health Board of Residence" = hbres_screen)
 
 ### Graph for printing
 kpi1_1_graph_5064 <- cervical_column_graph(df = hist_cov_table_5064 %>%
-                                             filter(fin_year %in% fin_year_5) %>%
+                                             filter(financial_year %in% fin_year_5) %>%
                                              select("Health Board of Residence" = hbres_screen,
-                                                    "Financial Year" = fin_year, 
+                                                    "Financial Year" = financial_year, 
                                                     "Coverage (%)\nWomen aged 50-64" = age_appr_coverage),
                                            data_col = "Coverage (%)\nWomen aged 50-64", 
                                            colours = create_palette(hist_cov_table_5064 %>%
-                                                                      filter(fin_year %in% fin_year_5) |> 
-                                                                      pull(fin_year)), 
+                                                                      filter(financial_year %in% fin_year_5) |> 
+                                                                      pull(financial_year)), 
                                            threshold = 80)
 
-ggsave(filename = paste0(fy_folder_path, "graphs/supp_kpi1_1_5064_", year_label, ".png"),
-       plot = kpi1_1_graph_5064,
-       width = 9, height = 5)
+# ggsave(filename = paste0(fy_folder_path, "graphs/supp_kpi1_1_5064_", year_label, ".png"),
+#        plot = kpi1_1_graph_5064,
+#        width = 9, height = 5)
 
 # KPI 1 - Coverage by SIMD, 5 year trend data ----
 ## 25-49 ----
@@ -263,32 +256,32 @@ kpi1_1a_scotland_2549 <- hist_simd_cov_table_2549 %>%
   filter(hbres_screen == "Scotland") 
 
 kpi1_1a_5yr_table_2549 <- kpi1_1a_scotland_2549 %>% 
-  pivot_wider(names_from = fin_year,
+  pivot_wider(names_from = financial_year,
               values_from = age_appr_coverage)  %>% 
   select(!hbres_screen) %>% 
   rename("Deprivation (SIMD)" = simd)
 
 kpi1_1a_1yr_table_2549 <- hist_simd_cov_table_2549 %>% 
-  filter(fin_year == fin_yr) %>% 
-  select(!fin_year) %>% 
+  filter(financial_year == fin_yr) %>% 
+  select(!financial_year) %>% 
   pivot_wider(names_from = hbres_screen,
               values_from = age_appr_coverage) %>% 
   rename("Deprivation (SIMD)"= simd)
 
 # Graph for printing
 kpi1_1a_graph_2549 <- cervical_column_graph(df = kpi1_1a_scotland_2549 %>%
-                                         filter(fin_year %in% fin_year_5) %>%
-                                         select("Deprivation (SIMD)" = simd, "Financial Year" = fin_year,
+                                         filter(financial_year %in% fin_year_5) %>%
+                                         select("Deprivation (SIMD)" = simd, "Financial Year" = financial_year,
                                                 "Coverage (%)\nWomen aged 25-49" = age_appr_coverage),
                                       data_col = "Coverage (%)\nWomen aged 25-49", 
                                       colours = create_palette(kpi1_1a_scotland_2549 %>%
-                                                                 filter(fin_year %in% fin_year_5) |> 
-                                                                 pull(fin_year)),
+                                                                 filter(financial_year %in% fin_year_5) |> 
+                                                                 pull(financial_year)),
                                       threshold = 80)
 
-ggsave(filename = paste0(fy_folder_path, "graphs/supp_kpi1_1a_2549_", year_label, ".png"),
-       plot = kpi1_1a_graph_2549,
-       width = 7.5, height = 4)
+# ggsave(filename = paste0(fy_folder_path, "graphs/supp_kpi1_1a_2549_", year_label, ".png"),
+#        plot = kpi1_1a_graph_2549,
+#        width = 7.5, height = 4)
 
 ## 50-64 ----
 hist_simd_cov_table_5064 <- hist_simd_cov_add %>% 
@@ -302,32 +295,33 @@ kpi1_1a_scotland_5064 <- hist_simd_cov_table_5064 %>%
   filter(hbres_screen == "Scotland") 
 
 kpi1_1a_5yr_table_5064 <- kpi1_1a_scotland_5064 %>% 
-  pivot_wider(names_from = fin_year,
+  pivot_wider(names_from = financial_year,
               values_from = age_appr_coverage)  %>% 
   select(!hbres_screen) %>% 
   rename("Deprivation (SIMD)" = simd)
 
 kpi1_1a_1yr_table_5064 <- hist_simd_cov_table_5064 %>% 
-  filter(fin_year == fin_yr) %>% 
-  select(!fin_year) %>% 
+  filter(financial_year == fin_yr) %>% 
+  select(!financial_year) %>% 
   pivot_wider(names_from = hbres_screen,
               values_from = age_appr_coverage) %>% 
   rename("Deprivation (SIMD)"= simd)
 
 # Graph for printing
 kpi1_1a_graph_5064 <- cervical_column_graph(df = kpi1_1a_scotland_5064 %>%
-                                              filter(fin_year %in% fin_year_5) %>%
-                                              select("Deprivation (SIMD)" = simd, "Financial Year" = fin_year,
+                                              filter(financial_year %in% fin_year_5) %>%
+                                              select("Deprivation (SIMD)" = simd, 
+                                                     "Financial Year" = financial_year,
                                                      "Coverage (%)\nWomen aged 50-64" = age_appr_coverage),
                                             data_col = "Coverage (%)\nWomen aged 50-64",
                                             colours = create_palette(kpi1_1a_scotland_5064 %>%
-                                                                    filter(fin_year %in% fin_year_5) |> 
-                                                                    pull(fin_year)),
+                                                                    filter(financial_year %in% fin_year_5) |> 
+                                                                    pull(financial_year)),
                                             threshold = 80)
 
-ggsave(filename = paste0(fy_folder_path, "graphs/supp_kpi1_1a_5064_", year_label, ".png"),
-       plot = kpi1_1a_graph_5064,
-       width = 7.5, height = 4)
+# ggsave(filename = paste0(fy_folder_path, "graphs/supp_kpi1_1a_5064_", year_label, ".png"),
+#        plot = kpi1_1a_graph_5064,
+#        width = 7.5, height = 4)
 
 
 # Write KPI 1 workbook ----
@@ -340,5 +334,4 @@ wrt_xlsx_kpi1_2549_5064(scr_period_1yr, scr_period_3yr, scr_period_5yr, fmt_styl
                         save_to_kpi1_sd_xlsx)
 
 
-# End of Script ----
-
+#### End of Script ####
