@@ -1,18 +1,167 @@
-##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## R Cervical Screening - KPIs for Publication
+################################################################################
+## R Cervical Screening Publication - KPI 1-3
 ## func_cervical_wrt_kpi_data.R
 ## 
 ## Adult Screening Team
 ## Created: 23/08/2024
-## Last update: 09/07/2025
+## Last update: 25/11/2026
+## Analysts: Ben Duncan & John Quinn
 ## 
 ## Written/run on RStudio Posit Workbench
 ## Platform: x86_64-pc-linux-gnu
 ## R version 4.4.2 (Pile of Leaves) - 2024-10-31
-##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+################################################################################
 
+wrt_kpi_table <- function(wb, sheet,
+                          col_start, row_start,
+                          kpi_table_header, table,
+                          styles,
+                          footnote=NULL,
+                          table_col_center_align = 0,
+                          decimal_points = 1,
+                          ...){
+  
+  table_length <- nrow(table)
+  if (names(table)[1] == "Health Board of Residence") {
+    hb_table <- TRUE
+  } else {
+    hb_table <- FALSE
+  }
+  
+  # Table title
+  writeData(wb, sheet, kpi_table_header,
+            startCol = col_start, startRow = row_start)
+  setRowHeights(wb, sheet, rows = row_start + 1, heights = 24) 
+  addStyle(wb, sheet, styles$valign_bottom,
+           rows = row_start + 1, 
+           cols = col_start,
+           gridExpand = TRUE, stack = TRUE)
+  
+  # Table data
+  writeData(wb, sheet, table,
+            startCol = col_start, startRow = row_start + 1)
+  
+  # Format table data and header
+  
+  addStyle(wb, sheet, styles$halign_right,
+           rows = row_start + 1, 
+           cols = (col_start + table_col_center_align):(col_start + ncol(table)),
+           gridExpand = TRUE, stack = TRUE)
+  addStyle(wb, sheet, styles$wrap_text,
+           rows = row_start + 1, cols = (col_start + 1):(col_start+ncol(table)),
+           gridExpand = TRUE, stack = TRUE)
+  addStyle(wb, sheet, styles$border_bottom_thick,
+           rows = c(row_start, row_start+1, row_start+1+table_length), cols = (col_start):(col_start+ncol(table) -1),
+           gridExpand = TRUE, stack = TRUE)
+  
+  # Format Table title and  table data header 
+  addStyle(wb, sheet, styles$b_font,
+           rows = c(row_start, row_start+1), 
+           cols = (col_start):(col_start+ncol(table) - 1),
+           gridExpand = TRUE, stack = TRUE)
+  addStyle(wb, sheet, styles$valign_mid,
+           rows = c(row_start+1, row_start+1+table_length), 
+           cols = (col_start):(col_start+ncol(table) - 1),
+           gridExpand = TRUE, stack = TRUE)
+  
+  decimal_format <- paste0("0.", paste(rep("0", decimal_points), collapse = ""))
+  num_fmt <- paste0('[>100]#,###;[=-1]"..";', decimal_format)
+  
+  addStyle(wb, sheet, createStyle(numFmt = num_fmt),
+             rows = (row_start + 2):(row_start+1+table_length), cols = (col_start + 1):(col_start+ncol(table)),
+             gridExpand = TRUE, stack = TRUE)
+  
+  # bold last row is Scotland
+  if (hb_table == TRUE){
+    addStyle(wb, sheet, styles$b_font,
+             rows = row_start+1+table_length, 
+             cols = (col_start):(col_start+ncol(table) - 1),
+             gridExpand = TRUE, stack = TRUE)
+    addStyle(wb, sheet, styles$halign_left,
+             rows = (row_start + 1):(row_start+1+table_length), 
+             cols = (col_start),
+             gridExpand = TRUE, stack = TRUE)
+    addStyle(wb, sheet, styles$halign_right,
+             rows = (row_start + 1):(row_start+1+table_length), 
+             cols = (col_start + 1):(col_start+ncol(table) - 1),
+             gridExpand = TRUE, stack = TRUE)
+  } else {
+    addStyle(wb, sheet, styles$halign_centre,
+             rows = (row_start + 1):(row_start+1+table_length), 
+             cols = (col_start):(col_start+ncol(table) - 1),
+             gridExpand = TRUE, stack = TRUE)
+  }
+  
+  if (tail(names(table),1) == "Scotland"){
+    addStyle(wb, sheet, styles$b_font,
+             rows = (row_start + 1):(row_start+1+table_length), 
+             cols = (col_start+ncol(table) - 1),
+             gridExpand = TRUE, stack = TRUE)
+  }
+  
+  footnote_counter <- 0
+  
+  if (!is.null(footnote)) {
+    writeData(wb, sheet, footnote,
+              startCol = col_start, 
+              startRow = row_start+2+table_length)
+    addStyle(wb, sheet, styles$font_sz8,
+             rows = row_start+2+table_length, 
+             cols = col_start)
+    footnote_counter <- footnote_counter + 1
+  }
+  
+  # Write explanation for .. (if any)
+  if (table %>%
+      select(where(is.double)) %>%
+      purrr::map_lgl(~ any(. <0)) %>%
+      any == TRUE) {
+    
+    writeData(wb, sheet, "..  shown where no data is available",
+              startRow = row_start+table_length+2 + footnote_counter, 
+              startCol = 1)
+    footnote_counter <- footnote_counter + 1
+  }
+  
+}
 
-# Function to write to the KPI data sheet for excel reports - One table ----
+wrt_kpi_figure <- function(wb, sheet,
+                           figure_header, figure,
+                           col_start, row_start,
+                           fig_height, fig_width,
+                           styles, 
+                           header_width = 8,
+                           ...){
+  # Graph
+  print(figure)
+  insertPlot(wb, sheet, 
+             width = fig_width, height = fig_height, 
+             startRow = row_start + 1, startCol = col_start)
+  # Graph Title
+  writeData(wb, sheet, figure_header,
+            startRow = row_start, 
+            startCol = col_start)
+  
+  # Format Graph Title
+  setRowHeights(wb, sheet, rows = row_start, heights = 24)
+  mergeCells(wb, sheet, rows = row_start, cols = col_start:(col_start + header_width))
+  addStyle(wb, sheet, styles$b_font,
+           rows = row_start,
+           cols = col_start,
+           gridExpand = TRUE, stack = TRUE)
+  
+  addStyle(wb, sheet, styles$wrap_text,
+           rows = row_start, 
+           cols = col_start,
+           gridExpand = TRUE, stack = TRUE)
+  addStyle(wb, sheet, styles$halign_left,
+           rows = row_start, 
+           cols = col_start,
+           gridExpand = TRUE, stack = TRUE)
+  
+}
+
+#### Function to write to the KPI data sheet for excel reports - One table ####
 ## wb: workbook with a sheet named Notes
 ## sheet: string with the name of the Sheet to write the data to
 ## scr_period: String with the Screening period
@@ -25,114 +174,55 @@
 
 wrt_kpi_1x_table <- function(wb, sheet, scr_period, kpi_subt, fig_legend,
                              kpi_table_header, kpi_data, kpi_fig, styles,
-                             footnote) {
+                             footnote = NULL,...) {
   
+  row_counter <- 1
   # Titles
   writeData(wb, sheet, kpi_subt,
-            colNames = FALSE, startCol = 1, startRow = 1)
+            colNames = FALSE, startCol = 1, startRow = row_counter)
   writeData(wb, sheet, scr_period,
-            colNames = FALSE, startCol = 1, startRow = 2)
+            colNames = FALSE, startCol = 1, startRow = row_counter + 1)
   if (grepl("1.1", sheet)) {
     writeData(wb, sheet, "See Notes tab for other look-back periods",
-              colNames = FALSE, startCol = 1, startRow = 3)
+              colNames = FALSE, startCol = 1, startRow = row_counter + 2)
   }
   
   # Format titles
   addStyle(wb, sheet, styles$kpi_title,
-           rows = 1, cols = 1,
+           rows = row_counter, cols = 1,
            gridExpand = TRUE, stack = TRUE)
   
-  # Table title
-  writeData(wb, sheet, kpi_table_header,
-            startCol = 1, startRow = 5)
+  row_counter <- row_counter + 5
+  kpi_data <- kpi_data %>% 
+    no_data_reporting_ref()
   
-  # Format Table title
-  # addStyle(wb, sheet, styles$phs_magenta_font,
-  #          rows = c(2, 5), cols = 1,
-  #          gridExpand = TRUE, stack = TRUE)
+  wrt_kpi_table(wb, sheet,
+                1, row_counter,
+                kpi_table_header, kpi_data,
+                styles,
+                footnote=footnote,
+                ...)
   
-  # Table data
-  writeData(wb, sheet, kpi_data,
-            startCol = 1, startRow = 6)
+  row_counter <- row_counter + nrow(kpi_data)+4
   
-  # Format table data and header
-  addStyle(wb, sheet, styles$halign_right,
-           rows = 6, 
-           cols = 2:ncol(kpi_data),
-           gridExpand = TRUE, stack = TRUE)
-  addStyle(wb, sheet, styles$wrap_text,
-           rows = 6, cols = 2:ncol(kpi_data),
-           gridExpand = TRUE, stack = TRUE)
-  
-  if (grepl("KPI 1", sheet)) {
-    addStyle(wb, sheet, styles$decimal_num,
-             rows = 7:(6+nrow(kpi_data)), cols = 2:ncol(kpi_data),
-             gridExpand = TRUE, stack = TRUE)
-  } else {
-    addStyle(wb, sheet, styles$decimal_two_num,
-             rows = 7:(6+nrow(kpi_data)), cols = 2:ncol(kpi_data),
-             gridExpand = TRUE, stack = TRUE)
-  }
-  
-  addStyle(wb, sheet, styles$border_bottom_thick,
-           rows = c(5, 6, 6+nrow(kpi_data)), cols = 1:ncol(kpi_data),
-           gridExpand = TRUE, stack = TRUE)
-  
-  # Format Table title, table data header and last data row
-  addStyle(wb, sheet, styles$b_font,
-           rows = c(5, 6, 6+nrow(kpi_data)), 
-           cols = 1:ncol(kpi_data),
-           gridExpand = TRUE, stack = TRUE)
-  addStyle(wb, sheet, styles$valign_mid,
-           rows = c(6, 6+nrow(kpi_data)), 
-           cols = 1:ncol(kpi_data),
-           gridExpand = TRUE, stack = TRUE)
-  
-  if (grepl("KPI 2|3", sheet)) {
-    writeData(wb, sheet, footnote,
-              startCol = 1, 
-              startRow = 7+nrow(kpi_data))
-    addStyle(wb, sheet, styles$font_sz8,
-             rows = 7+nrow(kpi_data), 
-             cols = 1)
-  }
-  
-  # Graph
-  print(kpi_fig)
-  insertPlot(wb, sheet, 
-             width = 9, height = 4, 
-             startRow = 6, startCol = ncol(kpi_data)+2)
-  
-  # Graph title
-  writeData(wb, sheet, fig_legend,
-            startRow = 28, startCol = ncol(kpi_data)+2)
-  
-  # Format graph title
-  addStyle(wb, sheet, styles$b_font,
-           rows = 28, cols = ncol(kpi_data)+2,
-           gridExpand = TRUE, stack = TRUE)
-  addStyle(wb, sheet, styles$wrap_text,
-           rows = 28, cols = (ncol(kpi_data)+2):(ncol(kpi_data)+10),
-           gridExpand = TRUE, stack = TRUE)
-  addStyle(wb, sheet, styles$halign_centre,
-           rows = 28, cols = (ncol(kpi_data)+2):(ncol(kpi_data)+10),
-           gridExpand = TRUE, stack = TRUE)
+  wrt_kpi_figure(wb, sheet,
+                 fig_legend, kpi_fig,
+                             1, row_counter,
+                             4, 10,
+                             styles,
+                 ...)
   
   
   # Format worksheet
   setColWidths(wb, sheet, cols = 1, widths = 28)
   setColWidths(wb, sheet, cols = 2:ncol(kpi_data), widths = 12)
-  mergeCells(wb, sheet, cols = (ncol(kpi_data)+2):(ncol(kpi_data)+10), rows = 28)
-  setRowHeights(wb, sheet, rows = 6, heights = 30)
-  setRowHeights(wb, sheet, rows = 6+nrow(kpi_data), heights = 20)
-  setRowHeights(wb, sheet, rows = 28, heights = 29)
   
 }
 
 
 
 
-# Function to write to the KPI data sheets for excel reports - 2 tables ----
+#### Function to write to the KPI data sheets for excel reports - 2 tables ####
 ## wb: workbook with a sheet named Notes
 ## sheet: string with the name of the Sheet to write the data to
 ## scr_period: String with the Screening period
@@ -147,7 +237,8 @@ wrt_kpi_1x_table <- function(wb, sheet, scr_period, kpi_subt, fig_legend,
 wrt_kpi_2x_tables <- function(wb, sheet, scr_period, kpi_subt, fig_legend,
                               kpi_table_1yr_header, kpi_table_5yr_header, 
                               kpi_data1, kpi_data2, kpi_fig, styles, 
-                              footnote_a = "", footnote_b = "") {
+                              footnote_a = FALSE, footnote_b = FALSE,
+                              col_width = 15,...) {
   
   ## Titles
   writeData(wb, sheet, kpi_subt,
@@ -165,175 +256,52 @@ wrt_kpi_2x_tables <- function(wb, sheet, scr_period, kpi_subt, fig_legend,
            gridExpand = TRUE, stack = TRUE)
   
   
-  # Table 1 title
-  writeData(wb, sheet, kpi_table_1yr_header,
-            startCol = 1, startRow = 5)
-  
+ 
   # Convert any NAs to -1 to assign .. for no data
   kpi_data1 <- kpi_data1 %>% 
     no_data_reporting_ref()
   
-  # Table 1 data
-  writeData(wb, sheet, kpi_data1,
-            startCol = 1, startRow = 6)
+  row_counter <- 5
   
-  # Format Table 1 data
-  if (grepl("KPI 1", sheet)) {
-    addStyle(wb, sheet, styles$decimal_num,
-             rows = 7:(nrow(kpi_data1)+6), cols = 2:ncol(kpi_data1),
-             gridExpand = TRUE, stack = TRUE)
-  } else {
-    addStyle(wb, sheet, styles$decimal_two_num,
-             rows = 7:(nrow(kpi_data1)+6), cols = 2:ncol(kpi_data1),
-             gridExpand = TRUE, stack = TRUE)
-  }
+  wrt_kpi_table(wb, sheet,
+                1, row_counter,
+                kpi_table_1yr_header, kpi_data1,
+                styles,
+                ...)
+  
+  row_counter <- row_counter + nrow(kpi_data1) + 4
+  
+  # Convert any NAs to -1 to assign .. for no data
+  kpi_data2 <- kpi_data2 %>% 
+    no_data_reporting_ref()
+  
+  wrt_kpi_table(wb, sheet,
+                1, row_counter,
+                kpi_table_5yr_header, kpi_data2,
+                styles,
+                ...)
   
   
-  addStyle(wb, sheet, styles$border_bottom_thick,
-           rows = c(5, 6, nrow(kpi_data1)+6), 
-           cols = 1:ncol(kpi_data1),
-           gridExpand = TRUE, stack = TRUE)
-  
-  if (kpi_data1[1] |> 
-      tail(1) |> 
-      pull() == "Scotland") {
-    
-    addStyle(wb, sheet, styles$b_font,
-             rows = nrow(kpi_data1)+6, 
-             cols = 1:ncol(kpi_data1),
-             gridExpand = TRUE, stack = TRUE)
-    
-  }
-  
-  if (grepl("3.1|2", sheet)) {
-    writeData(wb, sheet, footnote_a,
-              startCol = 1, 
-              startRow = 7+nrow(kpi_data1))
-    addStyle(wb, sheet, styles$font_sz8,
-             rows = 7+nrow(kpi_data1), 
-             cols = 1)
-  }
-    
-  
-  # Write explanation for .. (if any)
-  if (kpi_data1 %>%
-      select(where(is.double)) %>%
-      purrr::map_lgl(~ any(. <0)) %>%
-      any == TRUE) {
-    
-    writeData(wb, sheet, "..  shown where no data is available",
-              startRow = 6+nrow(kpi_data1)+4+nrow(kpi_data2)+5, 
-              startCol = 1)
-  }
-  
-  # Table 2 title
-  writeData(wb, sheet, kpi_table_5yr_header,
-            startCol = 1, startRow = 6+nrow(kpi_data1)+3)
-  
-  # Table 2 data
-  writeData(wb, sheet, kpi_data2,
-            startCol = 1, startRow = 6+nrow(kpi_data1)+4)
-  
-  # Format table 2 data
-  
-  if (grepl("KPI 1", sheet)) {
-    addStyle(wb, sheet, styles$decimal_num,
-             rows = (6+nrow(kpi_data1)+5):(6+nrow(kpi_data1)+4+nrow(kpi_data2)), 
-             cols = 2:ncol(kpi_data2),
-             gridExpand = TRUE, stack = TRUE)
-  } else {
-    addStyle(wb, sheet, styles$decimal_two_num,
-             rows = (6+nrow(kpi_data1)+5):(6+nrow(kpi_data1)+4+nrow(kpi_data2)), 
-             cols = 2:ncol(kpi_data2),
-             gridExpand = TRUE, stack = TRUE)
-  }
-  
-  addStyle(wb, sheet, styles$border_bottom_thick,
-           rows = c(6+nrow(kpi_data1)+3, 6+nrow(kpi_data1)+4, 6+nrow(kpi_data1)+4+nrow(kpi_data2)), 
-           cols = 1:ncol(kpi_data2),
-           gridExpand = TRUE, stack = TRUE)
-  
-  if (kpi_data2[1] |> 
-      tail(1) |> 
-      pull() == "Scotland") {
-    
-    addStyle(wb, sheet, styles$b_font,
-             rows = nrow(kpi_data1)+6+nrow(kpi_data2)+4, 
-             cols = 1:ncol(kpi_data2),
-             gridExpand = TRUE, stack = TRUE)
-    
-  }
-  
-  if (grepl("3.1|2", sheet)) {
-    writeData(wb, sheet, footnote_b,
-              startCol = 1, 
-              startRow = 7+nrow(kpi_data1)+4+nrow(kpi_data2))
-    addStyle(wb, sheet, styles$font_sz8,
-             rows = 7+nrow(kpi_data1)+4+nrow(kpi_data2), 
-             cols = 1)
-  }
-  
-  #Format Table 1+2 data header + Titles
-  addStyle(wb, sheet, styles$b_font,
-           rows = c(5, 6, 
-                    5+nrow(kpi_data1)+4, 6+nrow(kpi_data1)+4), 
-           cols =  1:max(ncol(kpi_data1), ncol(kpi_data2)),
-           gridExpand = TRUE, stack = TRUE)
-  addStyle(wb, sheet, styles$valign_mid,
-           rows = c(6, 6+nrow(kpi_data1)+4), 
-           cols = 1:max(ncol(kpi_data1), ncol(kpi_data2)),
-           gridExpand = TRUE, stack = TRUE)
-  addStyle(wb, sheet, styles$wrap_text,
-           rows = c(6, 6+nrow(kpi_data1)+4), 
-           cols = 1:max(ncol(kpi_data1), ncol(kpi_data2)),
-           gridExpand = TRUE, stack = TRUE)
-  addStyle(wb, sheet, styles$halign_centre,
-           rows = c(6:(6+nrow(kpi_data1)), 
-                    (6+nrow(kpi_data1)+4):(6+nrow(kpi_data1)+4+nrow(kpi_data2))), 
-           cols = 1:max(ncol(kpi_data1), ncol(kpi_data2)),
-           gridExpand = TRUE, stack = TRUE)
-  # addStyle(wb, sheet, styles$phs_magenta_font,
-  #          rows = c(2, 5, 6+nrow(kpi_data1)+3), cols = 1,
-  #          gridExpand = TRUE, stack = TRUE)
-  
+  row_counter <- row_counter + nrow(kpi_data2) + 4
   
   # Graph
-  print(kpi_fig)
-  insertPlot(wb, sheet, 
-             width = 7.5, height = 4, 
-             startRow = 6+nrow(kpi_data1)+4, startCol = ncol(kpi_data2)+2)
-  # Graph Title
-  writeData(wb, sheet, fig_legend,
-            startRow = 6+nrow(kpi_data1)+4+22, 
-            startCol = ncol(kpi_data2)+2)
-  
-  # Format Graph Title
-  addStyle(wb, sheet, styles$b_font,
-           rows = 6+nrow(kpi_data1)+4+22,
-           cols = ncol(kpi_data2)+2,
-           gridExpand = TRUE, stack = TRUE)
-  addStyle(wb, sheet, styles$wrap_text,
-           rows = 6+nrow(kpi_data1)+4+22, 
-           cols = (ncol(kpi_data2)+2):(ncol(kpi_data2)+2+5),
-           gridExpand = TRUE, stack = TRUE)
-  addStyle(wb, sheet, styles$halign_centre,
-           rows = 6+nrow(kpi_data1)+4+22, 
-           cols = (ncol(kpi_data2)+2):(ncol(kpi_data2)+2+5),
-           gridExpand = TRUE, stack = TRUE)
+  wrt_kpi_figure(wb, sheet,
+                 fig_legend, kpi_fig,
+                 1, row_counter,
+                 4, 10,
+                 styles,
+                 header_width = 9,
+                 ...)
   
   # Format work sheet
   setColWidths(wb, sheet, cols = 1, widths = 28)
-  setColWidths(wb, sheet, cols = 2:ncol(kpi_data1), widths = 15)
-  mergeCells(wb, sheet, rows = 6+nrow(kpi_data1)+4+22,
-             cols = (ncol(kpi_data2)+2):(ncol(kpi_data2)+2+5))
-  setRowHeights(wb, sheet, rows = 6, heights = 32) 
-  setRowHeights(wb, sheet, rows = 6+nrow(kpi_data1)+4, heights = 32)
-  setRowHeights(wb, sheet, rows = 6+nrow(kpi_data1)+4+22, heights = 29)
+  setColWidths(wb, sheet, cols = 2:ncol(kpi_data1), widths = col_width)
+
   
 }
 
 
-# Function to write to the KPI data sheets for excel reports - 1 table, 2 graphs ----
+#### Function to write to the KPI 1 Deprivation analysis sheets for excel reports ####
 ## wb: workbook with a sheet named Notes
 ## sheet: string with the name of the Sheet to write the data to
 ## scr_period: String with the Screening period
@@ -347,7 +315,8 @@ wrt_kpi_2x_tables <- function(wb, sheet, scr_period, kpi_subt, fig_legend,
 
 wrt_kpi_2x_graphs <- function(wb, sheet, scr_period, kpi_subt, 
                               fig_legend1, fig_legend2, kpi_table_header, 
-                              kpi_data, kpi_fig1, kpi_fig2, styles) {
+                              kpi_data, kpi_fig1, kpi_fig2, styles,
+                              plot_1_width = 7.5, plot_2_width = 7.5, ...) {
   
   # Titles
   writeData(wb, sheet, kpi_subt,
@@ -363,117 +332,125 @@ wrt_kpi_2x_graphs <- function(wb, sheet, scr_period, kpi_subt,
   addStyle(wb, sheet, styles$kpi_title,
            rows = 1, cols = 1,
            gridExpand = TRUE, stack = TRUE)
-  # addStyle(wb, sheet, styles$phs_magenta_font,
-  #          rows = c(2, 5), cols = 1,
-  #          gridExpand = TRUE, stack = TRUE)
+
   
-  
-  # Table title
-  writeData(wb, sheet, kpi_table_header,
-            startCol = 1, startRow = 5)
-  
+
   # Convert any NAs to -1 to assign .. for no data
   kpi_data <- kpi_data %>% 
     no_data_reporting_ref()
   
-  # Table data
-  writeData(wb, sheet, kpi_data,
-            startCol = 1, startRow = 6)
+  wrt_kpi_table(wb, sheet,
+                1, 5,
+                kpi_table_header, kpi_data,
+                styles,
+                ...)
   
-  # Format Table title
-  addStyle(wb, sheet, styles$b_font,
-           rows = 6, cols = 2:ncol(kpi_data),
-           gridExpand = TRUE, stack = TRUE)
-  addStyle(wb, sheet, styles$wrap_text,
-           rows = 6, cols = 1:ncol(kpi_data),
-           gridExpand = TRUE, stack = TRUE)
   
-  # Format Table title and data
-  addStyle(wb, sheet, styles$valign_mid,
-           rows = c(6, 6+nrow(kpi_data)), cols = 1:ncol(kpi_data),
-           gridExpand = TRUE, stack = TRUE)
+  wrt_kpi_figure(wb, sheet,
+                 fig_legend1, kpi_fig1,
+                 1, 6+nrow(kpi_data)+4,
+                 4, plot_1_width,
+                 styles, 
+                 header_width = 5,
+                 ...)
   
-  if (grepl("KPI 1", sheet)) {
-    addStyle(wb, sheet, styles$decimal_num,
-             rows = 7:(nrow(kpi_data)+6), cols = 2:ncol(kpi_data),
-             gridExpand = TRUE, stack = TRUE)
-  } else {
-    addStyle(wb, sheet, styles$decimal_two_num,
-             rows = 7:(nrow(kpi_data)+6), cols = 2:ncol(kpi_data),
-             gridExpand = TRUE, stack = TRUE)
-  }
-  
-  addStyle(wb, sheet, styles$border_bottom_thick,
-           rows = c(5, 6, nrow(kpi_data)+6), cols = 1:ncol(kpi_data),
-           gridExpand = TRUE, stack = TRUE)
-  
-  addStyle(wb, sheet, styles$halign_centre,
-           rows = 6:(6+nrow(kpi_data)), 
-           cols = 1:ncol(kpi_data),
-           gridExpand = TRUE, stack = TRUE)
-  
-  # Write explanation for .. (if any)
-  if (kpi_data %>%
-      select(where(is.double)) %>%
-      purrr::map_lgl(~ any(. <0)) %>%
-      any == TRUE) {
-    
-    writeData(wb, sheet, "..  shown where no data is available",
-              startRow = 6+nrow(kpi_data)+4+nrow(kpi_data)+5, 
-              startCol = 1)
-  }
-  
-  # Graph 1
-  print(kpi_fig1)
-  insertPlot(wb, sheet, 
-             width = 7.5, height = 4, 
-             startRow = 6+nrow(kpi_data)+4, startCol = 1)
-  
-  # Graph 2
-  print(kpi_fig2)
-  insertPlot(wb, sheet, 
-             width = 7.5, height = 4, 
-             startRow = 6+nrow(kpi_data)+4, startCol = 8)
-  
-  # Graph title 1
-  writeData(wb, sheet, fig_legend1,
-            startRow = 6+nrow(kpi_data)+4+23, 
-            startCol = 1)
-  
-  # Graph titel 2
-  writeData(wb, sheet, fig_legend2,
-            startRow = 6+nrow(kpi_data)+4+23, 
-            startCol = 8)
-  
-  # Format Graphs 1+2 titles
-  addStyle(wb, sheet, styles$b_font,
-           rows = c(5:(6+nrow(kpi_data)+4+23)), cols = 1,
-           gridExpand = TRUE, stack = TRUE)
-  addStyle(wb, sheet, styles$b_font,
-           rows = 6+nrow(kpi_data)+4+23, cols = 8,
-           gridExpand = TRUE, stack = TRUE)
-  addStyle(wb, sheet, styles$wrap_text,
-           rows = 6+nrow(kpi_data)+4+23, 
-           cols = c(1:6, 8:15),
-           gridExpand = TRUE, stack = TRUE)
-  addStyle(wb, sheet, styles$halign_centre,
-           rows = 6+nrow(kpi_data)+4+23, 
-           cols = c(1:6, 8:15),
-           gridExpand = TRUE, stack = TRUE)
-  
+  wrt_kpi_figure(wb, sheet,
+                 fig_legend2, kpi_fig2,
+                 10, 6+nrow(kpi_data)+4,
+                 4, plot_1_width,
+                 styles, 
+                 header_width = 10,
+                 ...)
   
   # Format worksheet
   setColWidths(wb, sheet, cols = 1, widths = 19)
   setColWidths(wb, sheet, cols = 2:ncol(kpi_data), widths = 15)
-  mergeCells(wb, sheet, rows = 6+nrow(kpi_data)+4+23,
-             cols = 1:6)
-  mergeCells(wb, sheet, rows = 6+nrow(kpi_data)+4+23,
-             cols = 8:15)
-  setRowHeights(wb, sheet, rows = 6, heights = 32)
-  setRowHeights(wb, sheet, rows = 6+nrow(kpi_data)+4+23, heights = 40)
-  
+
   
 }
+
+
+
+#### Function to write to the KPI data sheets for excel reports - 3 tables ####
+## wb: workbook with a sheet named Notes
+## sheet: string with the name of the Sheet to write the data to
+## scr_period: String with the Screening period
+## kpi_title: String with the KPI title
+## kpi_subt: String with the KPI subtitle
+## fig_legend: String with the legend for the figure
+## kpi_data1: tibble with KPI data, Table 1 
+## kpi_data2: tibble with KPI data, Tabel 2 
+## kpi_fig: Figure presenting KPI data
+## styles: Vector with Excel formatting styles
+
+# wrt_kpi_3x_tables <- function(wb, sheet, scr_period, kpi_subt, fig_legend,
+#                               kpi_table_1_header, kpi_table_2_header, 
+#                               kpi_table_3_header,  
+#                               kpi_table_1, kpi_table_2, kpi_table_3, 
+#                               kpi_fig, 
+#                               styles, 
+#                               footnote_a = FALSE, footnote_b = FALSE) {
+#   
+#   # Format work sheet
+#   setColWidths(wb, sheet, cols = 1, widths = 28)
+#   setColWidths(wb, sheet, cols = 2:ncol(kpi_table_1), widths = 7)
+#   
+#   ## Titles
+#   writeData(wb, sheet, kpi_subt,
+#             colNames = FALSE, startCol = 1, startRow = 1)
+#   writeData(wb, sheet, scr_period,
+#             colNames = FALSE, startCol = 1, startRow = 2)
+#   if (grepl("1.1", sheet)) {
+#     writeData(wb, sheet, "See Notes tab for other look-back periods",
+#               colNames = FALSE, startCol = 1, startRow = 3)
+#   }
+#   
+#   #  Title format
+#   addStyle(wb, sheet, styles$kpi_title,
+#            rows = 1, cols = 1,
+#            gridExpand = TRUE, stack = TRUE)
+#   
+#   row_counter <- 5
+#   
+#   wrt_kpi_table(wb, sheet,
+#                             1, row_counter,
+#                 kpi_table_1_header, kpi_table_1,
+#                             styles,
+#                             table_col_center_align = 1)
+#   
+#   row_counter <- row_counter + 1 + nrow(kpi_table_1) + 3
+#   
+#   wrt_kpi_table(wb, sheet,
+#                 1, row_counter,
+#                 kpi_table_2_header, kpi_table_2,
+#                 styles,
+#                 table_col_center_align = 1)
+#   
+#   row_counter <- row_counter + 1 + nrow(kpi_table_2) + 3
+#   
+#   wrt_kpi_table(wb, sheet,
+#                 1, row_counter,
+#                 kpi_table_3_header, kpi_table_3,
+#                 styles,
+#                 table_col_center_align = 1)
+#   
+#   row_counter <- row_counter + 1 + nrow(kpi_table_3) + 2
+#   
+#   
+#   writeData(wb, sheet, "..  shown where no data is available",
+#               startRow = row_counter, 
+#               startCol = 1)
+#   wrt_kpi_figure(wb, sheet,
+#                  fig_legend, kpi_fig,
+#                  1, row_counter,
+#                  4, 10,
+#                  styles)
+#   
+#   
+# 
+# 
+#   
+# }
 
 
 
