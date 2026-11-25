@@ -1,28 +1,27 @@
-##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## R Cervical Screening - KPIs for Publication
+################################################################################
+## R Cervical Screening Publication - KPI 1-3
 ## 10_opendata.R
 ## 
 ## Adult Screening Team
-## Created: 26/05/25
-## Last update: 09/07/2025
+## Created: 23/08/2024
+## Last update: 25/11/2026
+## Analysts: Ben Duncan & John Quinn
 ## 
 ## Written/run on RStudio Posit Workbench
 ## Platform: x86_64-pc-linux-gnu
 ## R version 4.4.2 (Pile of Leaves) - 2024-10-31
-##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+################################################################################
 
 # Packages ----
-library(dplyr)
-library(readr)
+if(is.na(utils::packageDate("pacman"))) install.packages("pacman")
+pacman::p_load(readr, dplyr,)
 
 ## Clean global environment
 rm(list=ls())
 
-
-## Sourcing
+# Sourcing
 source("code/1_housekeeping.R")
 source("src/func_cervical_opendata.R")
-
 
 # Import rds files ----
 ## KPI 1 ----
@@ -53,7 +52,7 @@ kpi3_3 <- read_rds(paste0(fy_folder_path,
 # KPI 1 Open Data preparation ----
 od_kpi1_1 <- kpi1_1 |> 
   select(!hbres_screen)|>
-  rename(FinancialYear = fin_year,
+  rename(FinancialYear = financial_year,
          HBR = hb2019,
          AgeGroup = age_group,
          NumberEligible = eligible,
@@ -63,7 +62,7 @@ od_kpi1_1 <- kpi1_1 |>
 
 od_kpi1_1_simd <- kpi1_1_simd |> 
   select(!hbres_screen)|>
-  rename(FinancialYear = fin_year,
+  rename(FinancialYear = financial_year,
          HBR = hb2019,
          SIMD = simd,
          AgeGroup = age_group,
@@ -81,7 +80,7 @@ od_kpi1_1_simd <- kpi1_1_simd |>
 
 od_kpi1_2 <- kpi1_2 |> 
   select(!hbres_invite)|>
-  rename(FinancialYear = fin_year,
+  rename(FinancialYear = financial_year,
          HBR = hb2019,
          AgeGroup = age_group,
          NumberInvite = invites,
@@ -91,7 +90,7 @@ od_kpi1_2 <- kpi1_2 |>
 
 od_kpi1_2_simd <- kpi1_2_simd |> 
   select(!hbres_invite)|>
-  rename(FinancialYear = fin_year,
+  rename(FinancialYear = financial_year,
          HBR = hb2019,
          SIMD = simd,
          AgeGroup = age_group,
@@ -107,11 +106,24 @@ od_kpi1_2_simd <- kpi1_2_simd |>
          PercentageUptakeQF = ifelse(is.na(PercentageUptake), "z", NA)) |>
   arrange(desc(FinancialYear), HBR, AgeGroup)
 
+## KPI 1 Disclosure checks ----
+## Check if any Number is <10, which potentially need disclosure measures applied
+od_kpi1_1_simd |> 
+  filter(#SIMD == "all",
+         (NumberEligible > 0 & NumberEligible < 10) |
+           (NumberAgeAppropriateScreen > 0 & NumberAgeAppropriateScreen < 10))
+
+od_kpi1_2_simd |> 
+  filter(#SIMD == "all",
+         (NumberInvite > 0 & NumberInvite < 10) |
+           (NumberScreen > 0 & NumberScreen < 10))
+## Disclosure risk assessment has been completed and risk is deemed low
+## No disclosure measures are required
 
 # KPI 2 Open Data preparation ----
 od_kpi2_1 <- kpi2_1 |> 
   select(!hbres_screen) |>
-  rename(FinancialYear = fin_year,
+  rename(FinancialYear = financial_year,
          HBR = hb2019,
          NumberOfResultsReported = total_reports,
          NumberOfReportsWithin2Weeks = report_2week,
@@ -120,18 +132,17 @@ od_kpi2_1 <- kpi2_1 |>
 
 od_kpi2_2 <- kpi2_2 |> 
   select(!hbres_screen) |>
-  rename(FinancialYear = fin_year,
+  rename(FinancialYear = financial_year,
          HBR = hb2019,
          NumberOfSamplesReceived = total_samples,
          NumberOfSamplesRejected = rejected_samples,
          PercentageOfSamplesRejected = rejected_samples_pct) |>
   od_hbrqf()
 
-
 # KPI 3 Open Data preparation ----
 od_kpi3_1 <- kpi3_1 |> 
   select(!hbres_screen) |>
-  rename(FinancialYear = fin_year,
+  rename(FinancialYear = financial_year,
          HBR = hb2019,
          NumberOfCytologySamples = cytology_samples,
          NumberOfUnsatisfactoryCytologyResults = unsatisfactory,
@@ -140,7 +151,7 @@ od_kpi3_1 <- kpi3_1 |>
 
 od_kpi3_2 <- kpi3_2 |> 
   select(!hbres_screen) |>
-  rename(FinancialYear = fin_year,
+  rename(FinancialYear = financial_year,
          HBR = hb2019,
          NumberOfVirologySamples = virology_samples,
          NumberOfHPVFailResults = hpv_fail,
@@ -149,13 +160,12 @@ od_kpi3_2 <- kpi3_2 |>
 
 od_kpi3_3 <- kpi3_3 |> 
   select(!hbres_screen) |>
-  rename(FinancialYear = fin_year,
+  rename(FinancialYear = financial_year,
          HBR = hb2019,
          NumberOfFailedResults = result_fail,
          NumberOfRepeatScreen = repeat_screen,
          PercentageOfRepeatScreen = repeat_screen_pct) |>
   od_hbrqf()
-
 
 # Save OpenData csv files ----
 write_csv(od_kpi1_1_simd,
@@ -188,6 +198,5 @@ write_csv(od_kpi3_3,
           file = paste0(fy_folder_path, "opendata/",
                         "Cervical_Screening_RepeatScreen_201617_20", year_label, ".csv"),
           na = "")
-
 
 # End of Script ----
