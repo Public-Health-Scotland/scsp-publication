@@ -1,45 +1,50 @@
-##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## R Cervical Screening - KPIs for Publication
+################################################################################
+## R Cervical Screening Publication - KPI 1-3
 ## 1_housekeeping.R
 ## 
 ## Adult Screening Team
 ## Created: 23/08/2024
-## Last update: 09/07/2025
+## Last update: 25/11/2026
+## Analysts: Ben Duncan & John Quinn
 ## 
 ## Written/run on RStudio Posit Workbench
 ## Platform: x86_64-pc-linux-gnu
 ## R version 4.4.2 (Pile of Leaves) - 2024-10-31
-##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+################################################################################
 
-# Packages required to source ----
-library(lubridate)
-library(openxlsx)
+#### Packages
+if(is.na(utils::packageDate("pacman"))) install.packages("pacman")
+pacman::p_load(lubridate, openxlsx)
 
+### Variables
+extract_dl_date <- "20261016"
+yr_start <- 2025
+yr_end <- 2026
 
-# Variables ----
-extract_dl_date <- "20250205"
-yr_start <- 2023
-yr_end <- 2024
+data_month <- "October_2026"
 
 first_report_fin_yr <- "2016/17" # for 2022/23 and 2023/24 all historic years will be reported
-##!! From 2025/26, this variable can be deleted and updated within script to fin_year_5[1]
-##!! Table header for 3.2 and title for Figure 3.2 have hard coded year 2020/21, this should be updated to fin_year_5[1] next year
+# From 2026/27, this variable can be deleted and updated within script to fin_year_5[1]
+# Table header for 3.2 and title for Figure 3.2 have hard coded year 2020/21, this should be updated to fin_year_5[1] next year
 
 ## Start financial year when 5.5 year-look back is applies across all ages (25-64)
-all_scr5_5_start <- 2025 # Reporting period: 2025/26
-## Only update if this is changes by the Cervical Screening Programme Board 
+# Only update if this is changes by the Cervical Screening Programme Board 
+all_scr5_5_start <- 2025 # 2025/26
 
 
-## Automated variables
+## Automated variable
 fy_start_date_5_5 <- paste0("01-10-", yr_end-6)
 fy_start_date_3_5 <- paste0("01-10-", yr_end-4)
 fy_start_date <- paste0("01-04-", yr_start)
+###CHANGED below from 4 TO 9
+fy_start_date_5 <- dmy(paste0("01-04-", yr_start - 9))
 fy_end_date <- paste0("31-03-", yr_end)
 fy_end_date_plus_6m <- paste0("30-09-", yr_end)
 fin_yr <- paste0(yr_start, "/", substr(yr_end, 3, 4))
 year_label <- paste0(substr(yr_start, 3, 4), substr(yr_end, 3, 4))
 fy_folder <- paste0(yr_start, yr_end)
 hist_folder <- paste0(yr_start-1, yr_end-1)
+
 
 scr_period_1yr <- paste("Reporting period: 1st April", yr_start, "- 31st March", yr_end)
 
@@ -51,44 +56,54 @@ scr_period_5yr <- ifelse(yr_end>all_scr5_5_start,
          " and 5.5-year look-back period: 1st October ", 
          year(dmy(fy_start_date_5_5)), " - 31st March ", yr_end))
 
-fin_year_5 <- c(paste0(yr_end-5, "/", as.double(substr(yr_end, 3, 4))-4),
-                paste0(yr_end-4, "/", as.double(substr(yr_end, 3, 4))-3),
-                paste0(yr_end-3, "/", as.double(substr(yr_end, 3, 4))-2),
-                paste0(yr_end-2, "/", as.double(substr(yr_end, 3, 4))-1),
-                fin_yr)
+#fin_year_5 <- c(paste0(yr_end-5, "/", as.double(substr(yr_end, 3, 4))-4),
+#                paste0(yr_end-4, "/", as.double(substr(yr_end, 3, 4))-3),
+#                paste0(yr_end-3, "/", as.double(substr(yr_end, 3, 4))-2),
+#                paste0(yr_end-2, "/", as.double(substr(yr_end, 3, 4))-1),
+#                fin_yr)
+
+## We still want data from 2016/17 
+fin_year_5 <- paste0(
+  2016:yr_start,
+  "/",
+  substr((2017:yr_end), 3, 4)
+)
 
 
-# Import dataset file paths ----
+### Import dataset files
 ## Set paths
 fy_folder_path <- paste0("/PHI_conf/CancerGroup1/Topics/CervicalScreening/AnnualReports/",
                          fy_folder, "/Publication/")
-fy_folder_path <- ifelse(yr_start < 2022,
-                         paste0("/PHI_conf/CancerGroup1/Topics/CervicalScreening/AnnualReports/",
-                                "20162017_20212022", "/Publication/"),
-                         fy_folder_path)
+# fy_folder_path <- ifelse(yr_start < 2022,
+#                          paste0("/PHI_conf/CancerGroup1/Topics/CervicalScreening/AnnualReports/",
+#                                 "20162017_20212022", "/Publication/"),
+#                          fy_folder_path)
 
 hist_folder_path <- paste0("/PHI_conf/CancerGroup1/Topics/CervicalScreening/AnnualReports/",
                            hist_folder, "/Publication/historic/")
-hist_folder_path <- ifelse(yr_start < 2023,
-                           paste0("/PHI_conf/CancerGroup1/Topics/CervicalScreening/AnnualReports/",
-                                  "20162017_20212022", "/Publication/historic/"),
-                           hist_folder_path)
+data_file_path <- paste0("/PHI_conf/CancerGroup1/Topics/CervicalScreening/AnnualReports/",
+                         fy_folder, "/Publication/data/")
+# hist_folder_path <- ifelse(yr_start < 2023,
+#                            paste0("/PHI_conf/CancerGroup1/Topics/CervicalScreening/AnnualReports/",
+#                                   "20162017_20212022", "/Publication/historic/"),
+#                            hist_folder_path)
 
+atos_file_path <- paste0("/PHI_conf/CancerGroup1/Topics/CervicalScreening/Data/Publication-Data/", data_month,"/") 
 
-## Lookups
-simd20_path <- paste0("/conf/linkage/output/lookups/Unicode/Deprivation/",
-                      "postcode_2025_1_simd2020v2.rds")
+# analysis_path <- paste0("/PHI_conf/CancerGroup1/Topics/CervicalScreening/Investigations/",
+#                 "20240415-Cervical-KPIs-Development/Analysis/")
+# output_path <- paste0("/PHI_conf/CancerGroup1/Topics/CervicalScreening/Investigations/",
+#                       "20240415-Cervical-KPIs-Development/Output/")
 
-## Saving file paths ----
 save_to_kpi1_xlsx <- paste0(fy_folder_path,
-                            "output/KPI_1_Coverage_Uptake_", year_label, ".xlsx")
+                            "Checks/test/KPI_1_Coverage_Uptake_", year_label, "test.xlsx")
 save_to_kpi2_xlsx <- paste0(fy_folder_path,
-                            "output/KPI_2_Laboratory_Service_", year_label, ".xlsx")
+                            "Checks/test/KPI_2_Laboratory_Service_", year_label, "test.xlsx")
 save_to_kpi3_xlsx <- paste0(fy_folder_path,
-                            "output/KPI_3_Screening_Process_", year_label, ".xlsx")
+                            "Checks/test/KPI_3_Screening_Process_", year_label, "test.xlsx")
 
 
-# HB factor levels ----
+### HB factor levels
 hbres_levels <- c("Ayrshire & Arran", "Borders", "Dumfries & Galloway",
                   "Fife", "Forth Valley", "Grampian", "Greater Glasgow & Clyde",
                   "Highland", "Lanarkshire", "Lothian", "Orkney", "Shetland",
@@ -98,7 +113,7 @@ hb_levels <- c("S08000015", "S08000016", "S08000017", "S08000029", "S08000019",
                "S08000025", "S08000026", "S08000030", "S08000028", "S92000003")
 
 
-# KPI Titles for Excel reports ----
+#### KPI Titles for Excel reports
 kpi1_title <- "KPI 1: Coverage and Uptake"
 kpi2_title <- "KPI 2: Laboratory Service"
 kpi3_title <- "KPI 3: Screening Process"
@@ -106,8 +121,7 @@ kpi4_title <- "KPI 4: Effectiveness of Screening Programme"
 kpi5_title <- "KPI 5: Colposcopy Service"
 kpi6_title <- "KPI 6: Colposcopy Treatment"
 
-
-# KPI Notes for Excel reports ----
+#### KPI Notes for Excel reports
 kpi_notes <- list(
   kpi1_notes = list(
     content = tibble::tibble(
@@ -124,6 +138,8 @@ kpi_notes <- list(
                   "25-29, 30-34, 35-39, 40-44, 45-49, 50-54, 55-59, 60-64"),
             paste("      KPI 1.1c Coverage of eligible women who have attended", 
                   "screening within the specified period by deprivation (SIMD) and age group"),
+            paste("      KPI 1.1d Coverage of eligible women who have attended", 
+                  "screening within the specified period by vaccination status"),
             paste("      KPI 1.2  Annual uptake among women who are sent an offer", 
                   "of screening in the latest financial year"),
             paste("      KPI 1.2a Annual uptake among women who are sent an offer", 
@@ -132,43 +148,63 @@ kpi_notes <- list(
                   "of screening in the latest financial year by age groups:", 
                   "25-29, 30-34, 35-39, 40-44, 45-49, 50-54, 55-59, 60-64"),
             paste("      KPI 1.2c Annual uptake among women who are sent an offer", 
-                  "of screening in the latest financial year by deprivation (SIMD) and age group")
+                  "of screening in the latest financial year by deprivation (SIMD) and age group"),
+            paste("      KPI 1.2d Annual uptake among women who are sent an offer", 
+                  "of screening in the latest financial year by vaccination status")
     )),
     def = tibble::tibble(
       def = c("Definitions:",
-            paste("Coverage is defined as the percentage",
-                  "of women in a population eligible for",
-                  "screening at a given point in time who",
-                  "were screened adequately within a specific period."),
-            paste("Uptake is now defined as the proportion",
-                  "of those invited for screening who attended",
-                  "for a screen within six months (183 days) of",
-                  "their invitation date")
+            paste("Coverage is defined as the percentage of women in a population",
+            "eligible for screening at a given point in time who have had a cervical",
+            "screening encounter within the specified period."),
+            paste("For the total target age group (25 to 64 years), ‘age-appropriate",
+            "coverage’ defines coverage as the percentage of women in the population",
+            "eligible for cervical screening who have attended within the previous 3.5",
+            "years for women aged 25-49 and 5.5 years for women aged 50-64."),
+            paste("Note that the additional 0.5 year provides a window to allow",
+            "for the screening appointment to have been arranged and taken place",
+            "after the invitation or reminder letter was sent."),
+            "",
+            paste("Uptake is defined as the proportion of those invited for ",
+            "screening who have had a cervical screening encounter within six",
+            "months (183 days) of their invitation or reminder letter.")
     )),
     notes = tibble::tibble(
-      notes = c("Notes:",
-                paste("Whilst this workbook uses the term ‘women’,",
-                      "not only those who identify as women need",
-                      "access to cervical screening. Transgender men,",
-                      "non-binary and intersex people with a cervix are eligible."),
-                "From 2016/17 the eligible age for cervical screening is 25-64.",
-                paste0("Historically, women aged 25-49 have been invited ",
-                       "to attend cervical screening every three years ",
-                       "and those aged 50-64 every five. From March 2020, ",
-                       "women aged 25-64 are invited every five years. ",
-                       "This will be implemented to the KPI analysis in ",
-                       all_scr5_5_start, "/", all_scr5_5_start+1,
-                       ", to allow screening participant to move to the new recall."),
-                "",
-                "            Table 1: Age-appropriate look-back period at a given point in time",
-                "", #kpi_notes$kpi1_cov_periods_table,
-                "",
-                "",
-                "",
-                "",
-                ""
-    )),
-    table = tibble::tibble(
+      notes <- c(
+        "Notes:",
+        paste(
+          "Whilst this workbook uses the term ‘women’, the full ",
+          "inclusion criteria for the programme are:"
+        ),
+        paste("•	Women (biological sex female at birth) with a cervix"),
+        paste("•	Age 25-64 years"),
+        paste(
+          "•	Age 65-70 years inclusive if previous screening results have",
+          "shown changes that require further investigation or follow up"),
+        "",
+        "From 2016/17 the eligible age for cervical screening is 25-64.",
+        paste0(
+          "Historically, women aged 25-49 have been invited to ",
+          "attend cervical screening every three years and those aged ",
+          "50-64 every five."
+        ),
+        paste(
+          "From March 2020, the routine screening interval for women aged 25-49",
+          "years changed from three to five years following their next cervical",
+          "smear where HPV was the primary test."),
+        paste(
+          "From 2025/2026, all women will be reported against five-year in this",
+          "KPI analysis to allow screening participant to move to the new recall."
+          ),
+        "",
+        "",
+        paste(
+          "Look-back period is the date range that is checked to see if an ",
+          "eligible woman has had a cervical screening smear test."
+          ),
+        ""
+      )),
+    table1 = tibble::tibble(
       col_a = c("Reporting period\n(01 April - 31 March)",
             fin_yr,
             paste0(yr_start-1, "/", as.double(substr(yr_end, 3, 4))-1),
@@ -209,6 +245,20 @@ kpi_notes <- list(
                    paste("01 October", yr_start-7, "to 31 March", yr_end-4,
                          "\n01 October", yr_start-9, "to 31 March", yr_end-4))
     )),
+    table2 = tibble::tibble(
+      col_a = c("Reporting period\n(01 April - 31 March)",
+                fin_yr,
+                paste0(yr_start-1, "/", as.double(substr(yr_end, 3, 4))-1),
+                paste0(yr_start-2, "/", as.double(substr(yr_end, 3, 4))-2),
+                paste0(yr_start-3, "/", as.double(substr(yr_end, 3, 4))-3),
+                paste0(yr_start-4, "/", as.double(substr(yr_end, 3, 4))-4)),
+      col_b = c("Screened within period (six months\n[183 days] from invite or reminder letter)",
+                paste("01 April", yr_end-1, "to 30 September", yr_end),
+                paste("01 April", yr_end-2, "to 30 September", yr_end-1), 
+                paste("01 April", yr_end-3, "to 30 September", yr_end-2), 
+                paste("01 April", yr_end-4, "to 30 September", yr_end-3), 
+                paste("01 April", yr_end-5, "to 30 September", yr_end-4)
+      )),
     source = tibble::tibble(
       source = c("Source:",
             "Based on the Scottish Cervical Call Recall System (SCCRS).",
@@ -274,17 +324,19 @@ kpi_notes <- list(
                         "for a repeat screen following cytology", 
                         "unsatisfactory or HPV fail")
       )),
-    def = tibble::tibble(
-      def = c("Definitions:",
-              paste("An unsatisfactory cytology test is defined as a test that", 
-                    "is not of sufficient quality to enable results to be obtained.")
-      )),
     notes = tibble::tibble(
       notes = c("Notes:",
-                paste("Whilst this workbook uses the term ‘women’,",
-                      "not only those who identify as women need",
-                      "access to cervical screening. Transgender men,",
-                      "non-binary and intersex people with a cervix are eligible."),
+                paste(
+                  "Whilst this workbook uses the term ‘women’, the full ",
+                  "inclusion criteria for the programme are:"
+                ),
+                paste("•	Women (biological sex female at birth) with a cervix"),
+                paste("•	Age 25-64 years"),
+                paste(
+                  "•	Age 65-70 years inclusive if previous screening results",
+                  "have shown changes that require further investigation or ",
+                  "follow up"
+                ),
                 paste("On 30 March 2020, Human papillomavirus (HPV) testing replaced", 
                       "cervical cytology as the primary (first) cervical screening test.", 
                       "Cytology based tests are still used but only when HPV is found.")
@@ -393,13 +445,15 @@ kpi_notes <- list(
 )
 
 
-# KPI 1 Titles, Subtitles and Figure legends ----
+#### KPI 1 Titles, Subtitles and Figure legends
 kpi1_list <- list(kpi1_title = "KPI 1 - Coverage and Uptake", 
                   kpi1_1_subt = paste("KPI 1.1: Coverage of eligible women who have attended", 
                                       "cervical screening within the specified period"),
-                  fig1_1_legend = paste("Figure 1.1: Coverage (%) of eligible women with a previous", 
+                  fig1_1_legend = paste("Figure 1.1.2: Coverage (%) of eligible women with a previous", 
                                         "screening encounter within the previous 3.5 year or 5.5 years", 
                                         "by NHS Health Board of Residence,", fin_year_5[1], "to", fin_yr),
+                  fig1_1_scot_legend = paste("Figure 1.1.1: Cervical Screening Programme Coverage (%), Scotland,",
+                                             fin_year_5[1], "to", fin_yr),
                   table1_1_header = paste("Table 1.1: Coverage (%) of eligible women", 
                                           "by NHS Health Board of Residence,", first_report_fin_yr, "to", fin_yr),
                   kpi1_1a_subt = paste("KPI 1.1a: Coverage of eligible women who have attended", 
@@ -432,12 +486,24 @@ kpi1_list <- list(kpi1_title = "KPI 1 - Coverage and Uptake",
                   table1_1c_header = paste("Table 1.1c: Scotland Coverage (%) by deprivation (SIMD)", 
                                            "and age group, financial year", fin_yr),
                   
+                  kpi1_1d_subt = paste("KPI 1.1d: Coverage of eligible women who have attended",
+                                       "screening within the specified period by Vaccination status and age"),
+                  fig1_1d_legend = paste("Figure 1.1d: Scotland Coverage (%) of eligible women with a", 
+                                         "previous screening encounter within the previous 3.5 or 5.5 years", 
+                                         "by vaccination status and age for", fin_yr),
+                  table1_1d_header_1 = paste("Table 1.1d1: NHS Health Board of Residence and Scotland", 
+                                              "Coverage (%) for vaccination status Immunised by age, financial year", fin_yr),
+                  table1_1d_header_2 = paste("Table 1.1d2: NHS Health Board of Residence and Scotland", 
+                                             "Coverage (%) for vaccination status Not Immunised by age, financial year", fin_yr),
+                  
                   kpi1_2_subt = paste("KPI 1.2: Annual uptake among women who are sent an offer", 
                                       "of screening in the latest financial year"),
-                  fig1_2_legend = paste("Figure 1.2: Uptake (%) of women who are sent an offer", 
+                  fig1_2_legend = paste("Figure 1.2.2: Uptake (%) of women who are sent an offer", 
                                         "of screening within financial years", 
                                         fin_year_5[1], "to", fin_yr, 
                                         "by NHS Health Board of Residence"),
+                  fig1_2_scot_legend = paste("Figure 1.2.1: Cervical Screening Programme Uptake (%), Scotland,",
+                                             fin_year_5[1], "to", fin_yr),
                   table1_2_header = paste("Table 1.2: Uptake (%) by NHS Health Board of Residence,", 
                                           "financial years", first_report_fin_yr, "to", fin_yr),
                   
@@ -471,10 +537,19 @@ kpi1_list <- list(kpi1_title = "KPI 1 - Coverage and Uptake",
                                            "of screening within the financial year by deprivation (SIMD) and age group,", 
                                            "financial year", fin_yr),
                   table1_2c_header = paste("Table 1.2c: Scotland Uptake (%) by deprivation (SIMD) and age group,", 
-                                           "financial year", fin_yr))
+                                           "financial year", fin_yr),
+                  
+                  kpi1_2d_subt = paste("KPI 1.2d: Annual uptake among women who are sent an offer", 
+                                       "of screening in the latest financial year by vaccination status and age."),
+                  fig1_2d_legend = paste("Figure 1.2d: Scotland Uptake (%) of women who are sent an offer", 
+                                         "of screening within the financial year, by age and vaccination status for",fin_yr),
+                  table1_2d_header_1 = paste("Table 1.2d1: NHS Health Board of Residence and Scotland", 
+                                              "Uptake (%) for vaccination status Immunised by age, financial year", fin_yr),
+                  table1_2d_header_2 = paste("Table 1.2d2: NHS Health Board of Residence and Scotland", 
+                                             "Uptake (%) for vaccination status Not Immunised by age, financial year", fin_yr)
+                  )
 
-
-# KPI 2 Titles, Subtitles, Figure legends etc ----
+#### KPI 2 Titles, Subtitles, Figure legends etc
 kpi2_list <- list(
   kpi2_title = "KPI 2 - Laboratory Service",
   kpi2_1_subt = paste("KPI 2.1: Annual percentage of samples reported within", 
@@ -497,8 +572,7 @@ kpi2_list <- list(
   footnote = "\u00b9 Human papillomavirus (HPV) testing introduced as primary test."
 )
 
-
-# KPI 3 Titles, Subtitles, Figure legends etc ----
+#### KPI 3 Titles, Subtitles, Figure legends etc
 kpi3_list <- list(
   kpi3_title = "KPI 3 - Screening Process",
   kpi3_1_subt = "KPI 3.1: Percentage of unsatisfactory cytology tests",
@@ -531,14 +605,13 @@ kpi3_list <- list(
   tableb_footnote = "\u00b9 Human papillomavirus (HPV) testing introduced as primary test."
 )
 
-
-# KPI 4-6 Title lists to be added ----
-# KPI 4 Titles, Subtitles, Figure legends etc
-# KPI 5 Titles, Subtitles, Figure legends etc
-# KPI 6 Titles, Subtitles, Figure legends etc
+#### KPI 4 Titles, Subtitles, Figure legends etc
+#### KPI 5 Titles, Subtitles, Figure legends etc
+#### KPI 6 Titles, Subtitles, Figure legends etc
 
 
-# Workbook formatting styles ----
+
+#### Workbook formatting styles ####
 fmt_styles <- list(
   cover_title = createStyle(fontSize = 26, fontColour = "#12436D", halign = "center"),
   cover_title_bg = createStyle(fgFill = "#B3D7F2"),
@@ -546,14 +619,18 @@ fmt_styles <- list(
   kpi_title_fmt = createStyle(fontSize = 12, fontColour = "#12436D", textDecoration = "bold"),
   halign_right = createStyle(halign = "right"),
   valign_mid = createStyle(valign = "center"),
+  valign_bottom = createStyle(valign = "bottom"),
   thousand_num = createStyle(numFmt = "#,##0", halign = "right"),
-  decimal_num = createStyle(numFmt = '[>100]#,###;[=-1]"..";0.0', halign = "right"),
-  decimal_two_num = createStyle(numFmt = '[>100]#,###;[=-1]"..";0.00', halign = "right"),
+  decimal_one = createStyle(numFmt = '[>100]#,###;[=-1]"..";0.0'),
+  decimal_two = createStyle(numFmt = '[>100]#,###;[=-1]"..";0.00'),
   border_bottom_thick = createStyle(border = "bottom", borderStyle = "medium"),
+  #phs_blue_font = createStyle(fontColour = "#801650"),
   font_sz8 = createStyle(fontSize = 8),
   wrap_text = createStyle(wrapText = TRUE),
+  #phs_magenta_font = createStyle(fontColour = "#28A197"),
   halign_centre = createStyle(halign = "center"),
-  borders_all = createStyle(border = "bottom-top-left-right")
+  borders_all = createStyle(border = "bottom-top-left-right"),
+  halign_left = createStyle(halign = "left")
 )
 
 
