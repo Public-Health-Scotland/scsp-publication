@@ -1,16 +1,16 @@
-##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-## R Cervical Screening - KPIs for Publication
+################################################################################
+## R Cervical Screening Publication - KPI 1-3
 ## func_cervical_wrt_xlsx_workbook_2549_5064.R
 ## 
 ## Adult Screening Team
 ## Created: 23/08/2024
-## Last update: 09/07/2025
+## Last update: 25/11/2026
+## Analysts: Ben Duncan & John Quinn
 ## 
 ## Written/run on RStudio Posit Workbench
 ## Platform: x86_64-pc-linux-gnu
 ## R version 4.4.2 (Pile of Leaves) - 2024-10-31
-##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+################################################################################
 
 # Function to write the KPI 1 excel report, 3.5 and 5.5 split tabs ----
 ## wb: workbook with a sheet named Notes
@@ -51,19 +51,21 @@ wrt_xlsx_kpi1_2549_5064 <- function(scr_1yr, scr_3yr, scr_5yr, styles, kpi_notes
   
   # Write KPI data
   ## KPI 1.1
-  wrt_kpi_5yr(wb, "KPI 1.1 - Coverage, 3.5yr", scr_3yr, 
+  wrt_kpi_1x_table(wb, "KPI 1.1 - Coverage, 3.5yr", scr_3yr, 
               kpi1_list$kpi1_1_subt_35, kpi1_list$fig1_1_legend_35,
-              kpi1_list$table1_1_header_35, kpi1_1_data_2549, kpi1_1_fig_2549, styles)
-  wrt_kpi_5yr(wb, "KPI 1.1 - Coverage, 5.5yr", scr_5yr, 
+              kpi1_list$table1_1_header_35, kpi1_1_data_2549, kpi1_1_fig_2549, 
+              styles, footnote="")
+  wrt_kpi_1x_table(wb, "KPI 1.1 - Coverage, 5.5yr", scr_5yr, 
               kpi1_list$kpi1_1_subt_55, kpi1_list$fig1_1_legend_55,
-              kpi1_list$table1_1_header_55, kpi1_1_data_5064, kpi1_1_fig_5064, styles)
+              kpi1_list$table1_1_header_55, kpi1_1_data_5064, kpi1_1_fig_5064, 
+              styles, footnote="")
   
   ## KPI 1.1a
-  wrt_kpi_1yr_5yr(wb, "KPI 1.1a - Coverage SIMD, 3.5yr", scr_3yr, 
+  wrt_kpi_2x_tables(wb, "KPI 1.1a - Coverage SIMD, 3.5yr", scr_3yr, 
                   kpi1_list$kpi1_1a_subt_35, kpi1_list$fig1_1a_legend_35,
                   kpi1_list$table1_1a_hb_header_35, kpi1_list$table1_1a_sc_header_35, 
                   kpi1_1a_data_1yr_2549, kpi1_1a_data_5yr_2549, kpi1_1a_fig_2549, styles)
-  wrt_kpi_1yr_5yr(wb, "KPI 1.1a - Coverage SIMD, 5.5yr", scr_5yr, 
+  wrt_kpi_2x_tables(wb, "KPI 1.1a - Coverage SIMD, 5.5yr", scr_5yr, 
                   kpi1_list$kpi1_1a_subt_55, kpi1_list$fig1_1a_legend_55,
                   kpi1_list$table1_1a_hb_header_55, kpi1_list$table1_1a_sc_header_55, 
                   kpi1_1a_data_1yr_5064, kpi1_1a_data_5yr_5064, kpi1_1a_fig_5064, styles)
