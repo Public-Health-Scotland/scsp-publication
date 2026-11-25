@@ -1,6 +1,6 @@
 ################################################################################
 ## R Cervical Screening Publication - KPI 1-3
-## func_cervical_wrt_kpi_data.R
+## func_cervical_wrt_xlsx_workbook.R
 ## 
 ## Adult Screening Team
 ## Created: 23/08/2024
